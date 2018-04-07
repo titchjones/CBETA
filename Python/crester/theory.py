@@ -1,4 +1,8 @@
+import time
 import numpy as np
+from PyQt5.QtCore import *
+from  PyQt5.QtGui import *
+from  PyQt5.QtWidgets import *
 import scipy.constants as constants
 from scipy.optimize import curve_fit
 
@@ -90,9 +94,12 @@ class bpm(object):
 
     @property
     def x(self):
-        return self.length*(self.angle - self.dipole_angle)
+        return np.mean([self.length*(self.angle - self.dipole_angle) + 0.0001*np.random.randn() for i in range(5)])
 
-class accelerator(object):
+class accelerator(QObject):
+
+    newBPMReading = pyqtSignal(list)
+    newGradient = pyqtSignal(int, float)
 
     def __init__(self):
         super(accelerator, self).__init__()
@@ -147,8 +154,8 @@ class accelerator(object):
         self.phase = phase
         self.B = 0.3
         bpmpos = self.x
-        while(self.x > 10 or self.x < -10):
-            self.phase += 1
+        while((self.x > 10 or self.x < -10) and self.phase < 355):
+            self.phase += 5
 
     def gradient(self):
         return np.polyfit(x=self.bpmReadings[-5:,0], y=self.bpmReadings[-5:,1], deg=1)[0]
@@ -172,37 +179,68 @@ class accelerator(object):
     def guess_crest(self):
         return self.bpmReadings[:,0][list(self.bpmReadings[:,1]).index(np.max(self.bpmReadings[:,1]))]
 
-    def findCrest(self, phase=0):
-        phasesign = 1
+    def reset(self):
+        self.phasesign = 1
         self.offset = 0
         self.bpmReadings = np.empty((0,2),int)
+
+    def findCrest(self, phase=0):
+        self.offset = 0
         self.findStartingPhase(phase)
         self.initialPoints()
         if self.gradient() < 0:
-            phasesign = -1*phasesign
-        while((phasesign * self.gradient()) > -1):
-            self.phase += phasesign * np.sqrt(np.max([np.abs(self.gradient()), 0.5]))
-            self.center_beam()
-        self.claculated_crest = self.fit_curve()
-        self.set_on_crest(self.claculated_crest)
+            self.phasesign = -1*self.phasesign
 
-    def set_on_crest(self, crest):
-        while(np.abs(crest - self.phase) > 0.5):
+    def optimise(self):
+        while((self.phasesign * self.gradient()) > -1):
+            self.step()
+
+    def calculate_crest(self):
+        fit = self.fit_curve()
+        self.calculated_crest = fit[2]
+        return fit
+
+    def step(self):
+        if((self.phasesign * self.gradient()) > -1):
+            self.phase += self.phasesign * np.max([2, 5*np.abs(self.gradient())])
+            self.center_beam()
+            self.newBPMReading.emit([self.phase, self.x + self.offset])
+        self.newGradient.emit(self.phasesign, self.gradient())
+        # self.set_on_phase(self.calculated_crest)
+
+    def set_on_phase(self, crest):
+        while(np.abs(crest - self.phase) > 1):
             phasesign = np.sign(crest - self.phase)
-            self.phase += phasesign*np.sqrt(np.abs(crest - self.phase))
+            self.phase += phasesign*np.max([10, 5*np.abs(crest - self.phase)])
             self.center_beam()
 
     def fitting_equation(self, x, a, b, crest):
-        return a + b * np.cos((crest -x) * degree)
+        return a + b * np.cos((crest - x) * degree)
 
     def fit_curve(self):
-        popt, pcov = curve_fit(self.fitting_equation, self.bpmReadings[:,0], self.bpmReadings[:,1], p0=[1,4,self.guess_crest()])
-        return popt[2]
+        popt, pcov = curve_fit(self.fitting_equation, self.bpmReadings[:,0], self.bpmReadings[:,1], p0=[1,4,self.guess_crest()], bounds=([-np.inf, -np.inf, self.guess_crest()-20],[np.inf,np.inf,self.guess_crest()+20]))
+        return popt
 
-acc = accelerator()
-acc.crest = 360.0*np.random.random()
-acc.amplitude = 20e6
-acc.B = 0.327
-# acc.findStartingPhase()
-acc.findCrest(0)
-print acc.crest - acc.claculated_crest
+    def fittedData(self):
+        minx = np.min(self.bpmReadings[:,0])
+        maxx = np.max(self.bpmReadings[:,0])
+        fitting_params = self.fit_curve()
+        fittedData = [[x, self.fitting_equation(x, *fitting_params)] for x in np.arange(minx, maxx, 0.1)]
+        return fittedData
+
+def main():
+   acc = accelerator()
+   for i in range(20):
+       acc.crest = 360.0*np.random.random()
+       acc.amplitude = 20e6
+       acc.B = 0.327
+       # acc.findStartingPhase()
+       acc.reset()
+       acc.findCrest(0)
+       acc.optimise()
+       acc.calculate_crest()
+       acc.set_on_phase(acc.calculated_crest)
+       print i, acc.crest - np.mod(acc.phase,360)
+
+if __name__ == '__main__':
+   main()
