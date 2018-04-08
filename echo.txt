@@ -1,0 +1,13 @@
+1"MAD" Version 8.23dl  Windows NT 4.0             Copyright (C) 1990 by CERN.
+                                                  08/04/18     17.47.32
+ 
+ Input stream and message log:
+ 
+ 
+ MAD.     Reading standard input file.
+ 
+               assign, print="merge.print.txt",&                                               
+               echo="merge.echo.txt"                                                           
+ 
+ FLASSI.  ECHO stream rerouted to file: merge.echo.txt
+ 
