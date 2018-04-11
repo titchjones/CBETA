@@ -37,14 +37,14 @@ def currentWorkFolder(today=None,createdirectory=False):
     return folder, datetuple[2]
 
 class signalPV(QObject):
-    def __init__(self, parent, pv, name, group, color=0):
+    def __init__(self, parent, pv, name, group, color=0, timer=1.0):
         super(signalPV, self).__init__(parent = parent)
         self.parent = parent
         self.pv = pv
         self.name = name
         try:
             self.pvlink = PV(self.pv)
-            self.parent.sp.addSignal(name=name, pen=pg.mkColor(color),timer=1.0, function=self.pvlink.get)
+            self.parent.sp.addSignal(name=name, pen=pg.mkColor(color), timer=timer, function=self.pvlink.get)
             self.parent.addParameterSignal(name, group)
         except:
             print('Could not add signal: ', pv)
@@ -78,9 +78,10 @@ class signalRecorder(QMainWindow):
             settings = yaml.load(stream)
         for types in settings:
             for name, pvs in settings[types].items():
-                for pv in pvs:
+                timer = pvs['timer']
+                for pv in pvs['suffix']:
                     self.nPVs += 1
-                    signalPV(self, name+':'+pv, name.replace('-','_')+'_'+pv, types, color=self.nPVs)
+                    signalPV(self, name+':'+pv, name.replace('-','_')+'_'+pv, types, color=self.nPVs, timer=1.0/timer)
 
     def start(self):
         self.timer = QTimer()
@@ -146,9 +147,11 @@ class signalRecorder(QMainWindow):
 class plotWindow(QMainWindow):
     def __init__(self, parent=None, sp=None, name=''):
         super(plotWindow, self).__init__(parent)
+        self.setWindowTitle(name)
         self.sp = sp
         self.name = name
         self.plot = dataPlot(sp=self.sp, name=name)
+        self.signalProxy = pg.SignalProxy(self.plot.sigXRangeChanged, rateLimit=1, slot=self.update)
         self.widget = QWidget()
         self.layout = QGridLayout()
         self.widget.setLayout(self.layout)
@@ -169,8 +172,11 @@ class plotWindow(QMainWindow):
         self.show()
 
     def update(self):
-        # if self.isVisible():
-        self.plot.update()
+        self.signalProxy.disconnect()
+        if self.isVisible():
+            self.plot.update()
+        self.signalProxy = pg.SignalProxy(self.plot.sigXRangeChanged, rateLimit=1, slot=self.update)
+
 
     def autoUpdate(self):
         if self.autoUpdateCheckBox.isChecked() is True:
@@ -178,9 +184,45 @@ class plotWindow(QMainWindow):
         else:
             self.timer.stop()
 
+class HAxisTime(pg.AxisItem):
+    def __init__(self, orientation=None, pen=None, linkView=None, parent=None, maxTickLength=-5, showValues=True):
+        super(HAxisTime, self).__init__(parent=parent, orientation=orientation, linkView=linkView)
+        self.dateTicksOn = True
+        self.autoscroll = True
+
+    def updateTimeOffset(self,time):
+        self.timeOffset = time
+        self.resizeEvent()
+        self.update()
+
+    def tickStrings(self, values, scale, spacing):
+        if not hasattr(self, 'fixedtimepoint'):
+            self.fixedtimepoint = round(time.time(),2)
+        if self.dateTicksOn:
+            if self.autoscroll:
+                reftime = round(time.time(),2)
+            else:
+                reftime = self.fixedtimepoint
+            try:
+                ticks = [time.strftime("%H:%M:%S", time.localtime(x)) for x in values]
+            except:
+                ticks = []
+            return ticks
+        else:
+            places = max(0, np.ceil(-np.log10(spacing*scale)))
+            strings = []
+            for v in values:
+                vs = v * scale
+                if abs(vs) < .001 or abs(vs) >= 10000:
+                    vstr = "%g" % vs
+                else:
+                    vstr = ("%%0.%df" % places) % vs
+                strings.append(vstr)
+            return strings
+
 class dataPlot(pg.PlotWidget):
     def __init__(self, parent=None, sp=None, name=''):
-        super(dataPlot, self).__init__(parent)
+        super(dataPlot, self).__init__(parent, axisItems={'bottom': HAxisTime(orientation = 'bottom')})
         self.sp = sp
         self.name = name
         self.plotItem = self.getPlotItem()
@@ -188,11 +230,13 @@ class dataPlot(pg.PlotWidget):
         self.bpmPlot = self.plotItem.plot(symbol='+', symbolPen='r')
         self.fittedPlot = self.plotItem.plot(pen='b')
         self.plotItem.showGrid(x=True, y=True)
+        self.date_axis = self.getAxis('bottom')
+        # self.plotItem.
+        self.lastTime = time.time()
         self.update()
 
     def update(self):
         start = -100
-        print(self.plotItem.viewRange())
         start = self.plotItem.viewRange()[0][0]
         stop = -1
         stop = self.plotItem.viewRange()[0][1]
@@ -200,12 +244,14 @@ class dataPlot(pg.PlotWidget):
         if len(self.data) > 1:
             self.bpmPlot.setData(self.data)
             self.fittedPlot.setData(self.data)
+        self.plotItem.vb.translateBy(x=time.time() - self.lastTime)
+        self.lastTime = time.time()
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     if len(sys.argv) > 1:
         sr = signalRecorder(settings=sys.argv[1])
     else:
-        settings = QFileDialog.getOpenFileName()
+        settings = str(QFileDialog.getOpenFileName()[0].decode('utf-8'))
         sr = signalRecorder(settings=settings)
     sys.exit(app.exec_())
