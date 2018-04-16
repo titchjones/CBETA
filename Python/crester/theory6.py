@@ -177,7 +177,7 @@ class accelerator(QObject):
         bpmpos = self.x
         while((self.x > 10 or self.x < -10) and self.phase < 355):
             self.phase += 5
-        print 'starting phase = ', self.phase, self.crest
+        print ('starting phase = ', self.phase, self.crest)
 
     def gradient(self):
         return np.polyfit(x=self.bpmReadings[-5:,0], y=self.bpmReadings[-5:,1], deg=1)[0] * self.multiplier
@@ -276,7 +276,7 @@ def main():
         acc.calculate_crest()
         acc.set_on_phase(acc.calculated_crest)
         # print 'momentum = ', acc.momentum()/1e6, acc.B
-        print i+1, acc.crest - np.mod(acc.phase,360)
+        print (i+1, acc.crest - np.mod(acc.phase,360))
 
 if __name__ == '__main__':
    main()

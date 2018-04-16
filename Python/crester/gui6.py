@@ -17,7 +17,7 @@ class crester(QMainWindow):
 
         stdicon = self.style().standardIcon
         style = QStyle
-        self.setWindowTitle("Multi-Knob Control")
+        self.setWindowTitle("RF Cavity Cresting Application")
 
         menubar = self.menuBar()
         fileMenu = menubar.addMenu('&File')
@@ -128,7 +128,7 @@ class cavityCrester(QWidget):
             if not phasesign * gradient > -1:
                 self.stopCrest()
                 self.acc.set_on_phase(self.acc.calculated_crest)
-                print 'final values = ', self.acc.crest - self.acc.phase
+                print ('final values = ', self.acc.crest - self.acc.phase)
 
     def stopCrest(self):
         self.timer.stop()

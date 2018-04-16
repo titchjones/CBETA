@@ -11,7 +11,7 @@ import yaml
 _mapping_tag = yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG
 
 def dict_representer(dumper, data):
-    return dumper.represent_dict(data.iteritems())
+    return dumper.represent_dict(data.items())
 
 def dict_constructor(loader, node):
     return OrderedDict(loader.construct_pairs(node))
@@ -256,7 +256,7 @@ class multiknob(QMainWindow):
         self.widget = QTabWidget()
         self.setCentralWidget(self.widget)
 
-        for k,v in knobs.iteritems():
+        for k,v in knobs.items():
             if not k.lower() == 'general':
                 self.widget.addTab(knobTab(k, **v), k)
 
