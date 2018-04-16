@@ -36,6 +36,17 @@ def currentWorkFolder(today=None,createdirectory=False):
         os.makedirs(folder)
     return folder, datetuple[2]
 
+class PVObject(QObject):
+    def __init__(self, pv, parent=None):
+        super(PVObject, self).__init__(parent = parent)
+        self.pv = PV(pv, callback=self.setValue)
+
+    def setValue(self, pvname=None, value=None, **kwargs):
+        self.value = value
+
+    def get(self):
+        return self.value
+
 class signalPV(QObject):
     def __init__(self, parent, pv, name, group, color=0, timer=1.0):
         super(signalPV, self).__init__(parent = parent)
@@ -43,7 +54,7 @@ class signalPV(QObject):
         self.pv = pv
         self.name = name
         try:
-            self.pvlink = PV(self.pv)
+            self.pvlink = PVObject(self.pv)
             self.parent.sp.addSignal(name=name, pen=pg.mkColor(color), timer=timer, function=self.pvlink.get)
             self.parent.addParameterSignal(name, group)
         except:
