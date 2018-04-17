@@ -1,33 +1,31 @@
-import time, copy
+import time, copy, sys
 from epics import caget, caput, cainfo, PV
 import numpy as np
 from PyQt5.QtCore import *
 from  PyQt5.QtGui import *
 from  PyQt5.QtWidgets import *
 from collections import deque, OrderedDict
+from six import string_types
 
 def tablePrint(**kwargs):
-    print "{:<8} {:<15}".format('Key','Value')
+    print ("{:<8} {:<15}".format('Key','Value'))
     for k, v in kwargs.items():
-        print "{:<8} {:<15}".format(k, v)
+        print ("{:<8} {:<15}".format(k, v))
 
 class PVObject(QObject):
-
-    newValue = pyqtsignal(float, float)
-
     def __init__(self, pv, parent=None):
-        super(PVObject, self).__init__(parent = parent)
+        super(PVObject, self).__init__()
         self.name = pv
         self.pv = PV(self.name, callback=self.callback)
         self.dict = OrderedDict()
+        self._value = None
 
     def callback(self, **kwargs):
         self.dict = OrderedDict(kwargs)
-        if 'status' in kwargs and 'value' in kwargs and status:
+        if 'status' in kwargs and 'value' in kwargs and self.dict['status']:
             if not 'timestamp' in kwargs:
                 timestamp = time.time()
             self._value = [self.dict['timestamp'], self.dict['value']]
-            self.newValue.emit(*self.value)
 
     @property
     def value(self):
@@ -46,26 +44,29 @@ class PVObject(QObject):
     def put(self, value):
         self.pv.put(value)
 
-    def __str__(self):
-        tablePrint(self.dict)
-
 class PVBuffer(PVObject):
     def __init__(self, pv, maxlen=1024, parent=None):
         super(PVBuffer, self).__init__(pv=pv, parent = parent)
         self.maxlen = maxlen
         self.buffer = deque(maxlen=self.maxlen)
+        self._length = 0
         self.reset()
 
     def callback(self, **kwargs):
-        super(PVBuffer).callback(**kwargs)
-        self.buffer.append(self._value)
-        self.length += 1
-        self.sum_x1 += val
-        self.sum_x2 += val**2
-        if self._value[1] < self.minValue:
-            self.minValue = float(self._value[1])
-        if self._value[1] > self.max:
-            self.maxValue = float(self.maxValue[1])
+        self.dict = OrderedDict(kwargs)
+        if 'status' in kwargs and 'value' in kwargs and self.dict['status'] == 0:
+            if not 'timestamp' in kwargs:
+                timestamp = time.time()
+            self._value = [self.dict['timestamp'], self.dict['value']]
+            time, val = self._value
+            self.buffer.append(self._value)
+            self.length += 1
+            self.sum_x1 += val
+            self.sum_x2 += val**2
+            if self._value[1] < self.minValue:
+                self.minValue = float(self._value[1])
+            if self._value[1] > self.maxValue:
+                self.maxValue = float(self._value[1])
 
     def lastValue(self):
         return self._value
@@ -74,12 +75,19 @@ class PVBuffer(PVObject):
         return self.buffer
 
     @property
+    def length(self):
+        return self._length
+    @length.setter
+    def length(self, val):
+        self._length = val
+
+    @property
     def mean(self):
-        return self.sum_x1/length if length > 0 else 0
+        return self.sum_x1/self.length if self.length > 0 else 0
 
     @property
     def std(self):
-        return math.sqrt((self.sum_x2 / length) - (self.mean*self.mean)) if (self.sum_x2 / length) - (self.mean*self.mean) > 0 else 0
+        return math.sqrt((self.sum_x2 / self.length) - (self.mean*self.mean)) if (self.sum_x2 / self.length) - (self.mean*self.mean) > 0 else 0
 
     @property
     def min(self):
@@ -90,9 +98,9 @@ class PVBuffer(PVObject):
         return self.maxValue
 
     def reset(self):
-        self.length = 0
+        self._length = 0
         self.minValue = sys.maxsize
-        self.minValue = -1*sys.maxsize
+        self.maxValue = -1*sys.maxsize
         self.sum_x1 = 0
         self.sum_x2 = 0
 
