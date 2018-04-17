@@ -1,18 +1,14 @@
-Quadrupoles:
-  EBT-INJ-MAG-QUAD-01:
-    suffix: [SETI,READI]
+Gun:
+  GA1GHV01_volt_rdbk:
     timer: 1
-  EBT-INJ-MAG-QUAD-02:
-    suffix: [SETI,READI]
+  GA1GHV01_volt_cmd:
     timer: 1
-Vacuum:
-  CLA-S01-VAC-IMG-01:
-    suffix: [PRES]
+  GA1GHV01_voltage:
     timer: 1
-  CLA-S01-VAC-IONP-01:
-    suffix: [PRES]
+Buncher:
+  RFBDSP01_cav_setpoint_amp_scaled:
     timer: 1
-Temperatures:
-  CLA-L01-H2O-TT-09:
-    suffix: [RT]
+  RFBDSP01_on_crest_ph:
+    timer: 1
+  RA1CAV01_voltage:
     timer: 1

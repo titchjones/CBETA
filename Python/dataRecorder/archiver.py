@@ -89,10 +89,17 @@ class signalRecorder(QMainWindow):
             settings = yaml.load(stream)
         for types in settings:
             for name, pvs in settings[types].items():
-                timer = pvs['timer']
-                for pv in pvs['suffix']:
+                if 'timer' in pvs:
+                    timer = pvs['timer']
+                else:
+                    timer = 1
+                if 'suffix' in pvs:
+                    for pv in pvs['suffix']:
+                        self.nPVs += 1
+                        signalPV(self, name+':'+pv, name.replace('-','_')+'_'+pv, types, color=self.nPVs, timer=1.0/timer)
+                else:
                     self.nPVs += 1
-                    signalPV(self, name+':'+pv, name.replace('-','_')+'_'+pv, types, color=self.nPVs, timer=1.0/timer)
+                    signalPV(self, name, name.replace('-','_'), types, color=self.nPVs, timer=1.0/timer)
 
     def start(self):
         self.timer = QTimer()
