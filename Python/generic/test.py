@@ -3,6 +3,9 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
+testpv = PVBuffer('VA1IGA01_P')
+print (testpv)
+exit()
 
 class testPV(QMainWindow):
     def __init__(self, parent = None):
