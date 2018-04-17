@@ -1,9 +1,9 @@
 import time, copy
 from epics import caget, caput, cainfo, PV
-import numpy as np
-from PyQt5.QtCore import *
-from  PyQt5.QtGui import *
-from  PyQt5.QtWidgets import *
+# import numpy as np
+# from PyQt5.QtCore import *
+# from  PyQt5.QtGui import *
+# from  PyQt5.QtWidgets import *
 from collections import deque, OrderedDict
 
 def tablePrint(**kwargs):
@@ -11,7 +11,7 @@ def tablePrint(**kwargs):
     for k, v in kwargs.items():
         print "{:<8} {:<15}".format(k, v)
 
-class PVObject(QObject):
+class PVObject(object):
     def __init__(self, pv, parent=None):
         super(PVObject, self).__init__(parent = parent)
         self.name = pv

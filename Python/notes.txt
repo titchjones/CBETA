@@ -1,1 +1,2 @@
 connect to user@lnx102.classe.cornell.edu
+ssh erpopr@erp201
