@@ -27,6 +27,7 @@ class repeatedTimer(QtCore.QObject):
         ''' call signal generating Function '''
         value = self.function(*self.args)
         currenttime = self.start + (time.clock() - self.start_accurate)
+        currenttime = time.time()
         self.dataReady.emit([round(currenttime,4),value])
 
     def _target(self):
@@ -256,3 +257,4 @@ class signalRecorderH5(QObject):
         stop = table.nrows + stop + 1 if stop < 0 else stop
         data = [[row['time'], row['value']] for row in table.itersorted('time', start=start, stop=stop)]
         return data
+

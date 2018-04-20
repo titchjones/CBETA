@@ -1,6 +1,6 @@
 import sys, time, os
 from datetime import datetime
-sys.path.append("..")
+sys.path.append(os.path.dirname( os.path.abspath(__file__)) + "/../")
 import signalRecord as striptoolRecord
 import tables as tables
 from PyQt5.QtCore import *
@@ -31,7 +31,7 @@ def currentWorkFolder(today=None,createdirectory=False):
     day = str(day) if day >= 10 else '0' + str(day)
     hour = str(hour) if hour >= 10 else '0' + str(hour)
     minute = str(minute) if minute >= 10 else '0' + str(minute)
-    folder = '.\\'+str(year)+'\\'+str(month)+'\\'+str(day)+'\\'#+str(hour)+str(minute)
+    folder = '/tmp/'+str(year)+'/'+str(month)+'/'+str(day)+'/'#+str(hour)+str(minute)
     if not os.path.exists(folder) and createdirectory:
         os.makedirs(folder)
     return folder, datetuple[2]
@@ -41,7 +41,7 @@ class PVObject(QObject):
         super(PVObject, self).__init__(parent = parent)
         self.pv = PV(pv, callback=self.setValue)
 
-    def setValue(self, pvname=None, value=None, **kwargs):
+    def setValue(self, value=None, **kwargs):
         self.value = value
 
     def get(self):
@@ -169,7 +169,7 @@ class plotWindow(QMainWindow):
         self.sp = sp
         self.name = name
         self.plot = dataPlot(sp=self.sp, name=name)
-        self.signalProxy = pg.SignalProxy(self.plot.sigXRangeChanged, rateLimit=1, slot=self.update)
+        #self.signalProxy = pg.SignalProxy(self.plot.sigXRangeChanged, rateLimit=1, slot=self.update)
         self.widget = QWidget()
         self.layout = QGridLayout()
         self.widget.setLayout(self.layout)
@@ -190,10 +190,10 @@ class plotWindow(QMainWindow):
         self.show()
 
     def update(self):
-        self.signalProxy.disconnect()
+        #self.signalProxy.disconnect()
         if self.isVisible():
             self.plot.update()
-        self.signalProxy = pg.SignalProxy(self.plot.sigXRangeChanged, rateLimit=1, slot=self.update)
+        #self.signalProxy = pg.SignalProxy(self.plot.sigXRangeChanged, rateLimit=1, slot=self.update)
 
 
     def autoUpdate(self):
@@ -263,6 +263,7 @@ class dataPlot(pg.PlotWidget):
             self.bpmPlot.setData(self.data)
             self.fittedPlot.setData(self.data)
         self.plotItem.vb.translateBy(x=time.time() - self.lastTime)
+        #self.plotItem.setXRange(start+1, stop+1, padding=0)        
         self.lastTime = time.time()
 
 if __name__ == '__main__':
@@ -270,6 +271,6 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         sr = signalRecorder(settings=sys.argv[1])
     else:
-        settings = str(QFileDialog.getOpenFileName()[0].decode('utf-8'))
+        settings = str(QFileDialog.getOpenFileName()[0])
         sr = signalRecorder(settings=settings)
     sys.exit(app.exec_())

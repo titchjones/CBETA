@@ -2,16 +2,16 @@ import sys, os
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
-import pyqtgraph as pg
 import numpy as np
-from epics import caget, caput, cainfo, PV
 from collections import OrderedDict
 import yaml
+sys.path.append("..")
+from generic.pv import *
 
 _mapping_tag = yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG
 
 def dict_representer(dumper, data):
-    return dumper.represent_dict(data.items())
+    return dumper.represent_dict(data.iteritems())
 
 def dict_constructor(loader, node):
     return OrderedDict(loader.construct_pairs(node))
@@ -19,59 +19,11 @@ def dict_constructor(loader, node):
 yaml.add_representer(OrderedDict, dict_representer)
 yaml.add_constructor(_mapping_tag, dict_constructor)
 
-def reload_Settings():
-    global pv_names, knobs
-    with open(os.path.dirname( os.path.abspath(__file__))+'/pv_names.yaml', 'r') as infile:
-        pv_names = yaml.load(infile)
+with open(os.path.dirname( os.path.abspath(__file__))+'/pv_names.yaml', 'r') as infile:
+    pv_names = yaml.load(infile)
 
-    with open(os.path.dirname( os.path.abspath(__file__))+'/knobs.yaml', 'r') as infile:
-        knobs = yaml.load(infile)
-
-class fakePV(QObject):
-
-    emitSignal = pyqtSignal(str, float)
-
-    def __init__(self, name):
-        super(fakePV, self).__init__()
-        self.name = name
-        self.readPV = PV(self.name+':SETI')
-        self.readPV.connect()
-        # self.readPV.add_callback(self.valueChanged, type='value')
-        self.writePV = PV(self.name+':SETI')
-        self.writePV.connect()
-        self.statusPV = PV(self.name+':Sta')
-        # self.statusPV.add_callback(self.valueChanged, type='status')
-        self.statusPV.connect()
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.Update)
-        self.timer.start(100)
-
-    def stop(self):
-        self.timer.stop()
-
-    @property
-    def value(self):
-        return self.readPV.get()
-
-    def setValue(self, val):
-        self.writePV.put(val)
-
-    @property
-    def status(self):
-        return self.statusPV.get()
-
-    @property
-    def get(self):
-        return self.value
-
-    def Update(self):
-        # self.readPV.run_callbacks()
-        # self.statusPV.run_callbacks()
-        self.valueChanged(type='value', value=self.value)
-        self.valueChanged(type='status', value=self.status)
-
-    def valueChanged(self, **kwargs):
-        self.emitSignal.emit(kwargs['type'], kwargs['value'])
+with open(os.path.dirname( os.path.abspath(__file__))+'/knobs.yaml', 'r') as infile:
+    knobs = yaml.load(infile)
 
 class multiKnob_GroupBox(QGroupBox):
     """Multiknob group box."""
@@ -80,7 +32,7 @@ class multiKnob_GroupBox(QGroupBox):
         self.setTitle('Multi-Knobs')
         self.table = QGridLayout()
         self.table.setRowStretch(0,0)
-        for c,h in enumerate(['Enabled','Status', 'PV Name','Multiplier','Current Value']):
+        for c,h in enumerate(['On', 'PV Name','Multiplier','Current Value']):
             label = QLabel(h)
             label.setMaximumHeight(100)
             self.table.addWidget(label,0,c)
@@ -93,7 +45,7 @@ class multiKnob_GroupBox(QGroupBox):
         gLayout = QVBoxLayout()
         gLayout.addWidget(scroll)
         self.setLayout(gLayout)
-        self.row = 0
+        self.row = 1
         self.knobs = {}
 
     def addRow(self, knob):
@@ -125,50 +77,87 @@ class combinedKnob_GroupBox(QGroupBox):
         self.setTitle('Combined Knob')
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
+        self.multiplier = 0
+
+        self.displayLabel = QLabel('Step Size')
+        f = QFont( "Arial", 20, QFont.Bold)
+        self.displayLabel.setFont(f)
+        self.displayLabel.setAlignment(Qt.AlignCenter);
+        self.displayLabel.setMaximumHeight(20)
 
         self.display = QDoubleSpinBox()
-        self.display.setMinimum(-100)
-        self.display.setMaximum(100)
-        self.display.setValue(0)
-        self.display.setSingleStep(0.1)
+        self.display.setDecimals(3)
+        self.display.setMinimum(0)
+        self.display.setMaximum(0.1)
+        self.display.setValue(0.001)
+        self.display.setSingleStep(0.001)
         f = self.display.font()
         f.setPointSize(27) # sets the size to 27
         self.display.setFont(f)
-        self.display.valueChanged.connect(self.emitSignal)
 
+        self.leftrightLayout = QHBoxLayout()
+        self.leftButton = QPushButton()
+        self.leftButton.clicked.connect(self.multiplierDown)
+        self.leftButton.setIcon(self.style().standardIcon(getattr(QStyle, 'SP_ArrowLeft')))
+        self.rightButton = QPushButton()
+        self.rightButton.clicked.connect(self.multiplierUp)
+        self.rightButton.setIcon(self.style().standardIcon(getattr(QStyle, 'SP_ArrowRight')))
+        self.leftrightLayout.addWidget(self.leftButton)
+        self.leftrightLayout.addWidget(self.rightButton)
+
+        self.layout.addWidget(self.displayLabel)
         self.layout.addWidget(self.display)
+        self.layout.addLayout(self.leftrightLayout)
+
+    def multiplierUp(self):
+        self.multiplier += self.display.value()
+        self.emitSignal()
+
+    def multiplierDown(self):
+        self.multiplier -= self.display.value()
+        self.emitSignal()
 
     def emitSignal(self):
-        self.knobChanged.emit(self.display.value())
+        print ('multiplier = ', self.multiplier)
+        self.knobChanged.emit(self.multiplier)
+
+    def reset(self):
+        self.multiplier = 0
+        self.emitSignal()
 
     def setZero(self):
-        self.blockSignals(True)
-        self.display.setValue(0)
-        self.blockSignals(False)
+        #self.blockSignals(True)
+        self.multiplier = 0
+        #self.blockSignals(False)
 
 class relative_knob(QWidget):
     """multiknob knob."""
 
     deleteKnob = pyqtSignal()
 
-    def __init__(self, actuator, strength=0):
+    def __init__(self, actuator=None, strength=0):
         super(relative_knob, self).__init__()
-        self.actuator = actuator
-        self.strength = strength
-
         self.enabledWidget = QCheckBox()
         self.enabledWidget.setChecked(True)
 
         self.statusButton = QPushButton()
-        # self.statusButton.setReadOnly(True)
+        #self.statusButton.setReadOnly(True)
 
-        self.nameWidget = QLineEdit()
-        self.nameWidget.setText(self.actuator)
+        self.nameWidget = QComboBox()
+        self.nameWidget.setMinimumWidth(120)
+        self.nameWidget.addItems(pv_names)
+        if actuator is not None:
+            start_index = pv_names.index(actuator)
+        else:
+            start_index = 0
+        self.nameWidget.setCurrentIndex(start_index)
+
         self.spinWidget = QDoubleSpinBox()
-        self.spinWidget.setMinimum(-100)
-        self.spinWidget.setMaximum(100)
-        self.spinWidget.setValue(float(self.strength))
-        self.spinWidget.setSingleStep(0.01)
+        self.spinWidget.setMinimum(-10)
+        self.spinWidget.setMaximum(10)
+        self.spinWidget.setValue(1)
+        self.spinWidget.setSingleStep(0.1)
+        self.spinWidget.setValue(float(strength))
 
         self.valueWidget = QLineEdit()
         self.valueWidget.setReadOnly(True)
@@ -176,24 +165,25 @@ class relative_knob(QWidget):
         self.deleteButton = QPushButton('Del')
         self.deleteButton.clicked.connect(self.deleteRow)
 
+        self.changePV(start_index)
+        self.nameWidget.currentIndexChanged.connect(self.changePV)
+
     def deleteRow(self):
-        # self.pv.stop()
-        # del self.pv
-        # self.nameWidget.currentIndexChanged.disconnect()
+        del self.pv
+        self.nameWidget.currentIndexChanged.disconnect()
         self.deleteButton.clicked.disconnect()
         self.deleteKnob.emit()
 
     def changePV(self, index):
         pvname = str(self.nameWidget.itemText(index))
-        self.pv = fakePV(pvname)
+        self.pv = PVObject(pvname)
+        self.pv.writeAccess = True
         self.initialValue = self.pv.value
-        self.pv.emitSignal.connect(self.pvEmitted)
+        self.valueWidget.setText("{0:.3f}".format(self.initialValue))
+        self.pv.newValue.connect(self.pvEmitted)
 
-    def pvEmitted(self, type, value):
-        if type == 'value':
-             self.valueWidget.setText(str(value))
-        elif type == 'status':
-            self.setStatus(value)
+    def pvEmitted(self, value):
+        self.valueWidget.setText("{0:.4f}".format(value[1]))
 
     def setStatus(self, status):
         if status is True or status == 'ON':
@@ -208,11 +198,11 @@ class relative_knob(QWidget):
 
     @property
     def widgets(self):
-        return [self.enabledWidget, self.statusButton, self.nameWidget, self.spinWidget, self.valueWidget, self.deleteButton]
+        return [self.enabledWidget, self.nameWidget, self.spinWidget, self.valueWidget, self.deleteButton]
 
     def knobChanged(self, multiplier):
         if self.enabledWidget.isChecked():
-            self.pv.setValue(self.initialValue + multiplier * self.spinWidget.value())
+            self.pv.setValue(self.initialValue * (1 + multiplier * self.spinWidget.value()))
 
 class multiknob(QMainWindow):
     def __init__(self, parent = None):
@@ -224,20 +214,25 @@ class multiknob(QMainWindow):
 
         menubar = self.menuBar()
         fileMenu = menubar.addMenu('&File')
-        #
-        # addKnobAction = QAction('Add Knob', self)
-        # addKnobAction.setStatusTip('Add new Knob')
-        # addKnobAction.triggered.connect(self.addKnob)
-        # fileMenu.addAction(addKnobAction)
+
+        addTabAction = QAction('Add Tab', self)
+        addTabAction.setShortcut('Ctrl+T')
+        addTabAction.setStatusTip('Add new Tab')
+        addTabAction.triggered.connect(self.addTab)
+        fileMenu.addAction(addTabAction)
+
+        addKnobAction = QAction('Add Knob', self)
+        addKnobAction.setShortcut('Ctrl+K')
+        addKnobAction.setStatusTip('Add new Knob')
+        addKnobAction.triggered.connect(self.addKnob)
+        fileMenu.addAction(addKnobAction)
 
         reloadSettingsAction = QAction('Reload Settings', self)
-        reloadSettingsAction.setStatusTip('Reload Settings Files')
-        reloadSettingsAction.triggered.connect(self.reloadSettings)
+        reloadSettingsAction.setStatusTip('Reload Settings YAML File')
         fileMenu.addAction(reloadSettingsAction)
 
         saveAllDataAction = QAction('Save Data', self)
         saveAllDataAction.setStatusTip('Save All Data')
-        # saveAllDataAction.triggered.connect(self.generalplot.saveAllData)
         fileMenu.addAction(saveAllDataAction)
 
         exitAction = QAction('&Exit', self)
@@ -246,13 +241,8 @@ class multiknob(QMainWindow):
         exitAction.triggered.connect(qApp.quit)
         fileMenu.addAction(exitAction)
 
-        self.reloadSettings()
+        self.tabNo = 0
 
-    def reloadSettings(self):
-        reload_Settings()
-        if hasattr(self, 'widget'):
-            self.widget.deleteLater()
-            del self.widget
         self.widget = QTabWidget()
         self.setCentralWidget(self.widget)
 
@@ -260,24 +250,41 @@ class multiknob(QMainWindow):
             if not k.lower() == 'general':
                 self.widget.addTab(knobTab(k, **v), k)
 
+    def addTab(self):
+        self.tabNo += 1
+        self.widget.addTab(knobTab(''), 'Tab '+str(self.tabNo))
+
+    def addKnob(self):
+        self.widget.currentWidget().addKnob()
+
 class knobTab(QWidget):
 
-    def __init__(self, label, actuators, strengths, parent = None):
+    def __init__(self, label, parent = None, **kwargs):
         super(knobTab, self).__init__(parent)
         self.layout = QGridLayout()
         self.setLayout(self.layout)
         self.multiKnobGroup = multiKnob_GroupBox()
         self.combinedKnobGroup = combinedKnob_GroupBox()
-        self.layout.addWidget(self.multiKnobGroup,0,0)
-        self.layout.addWidget(self.combinedKnobGroup,0,1)
+        self.layout.addWidget(self.multiKnobGroup,0,0,1,2)
+        self.layout.addWidget(self.combinedKnobGroup,0,2)
         self.pushButton = QPushButton('Set Base Values')
         self.pushButton.clicked.connect(self.combinedKnobGroup.setZero)
-        self.layout.addWidget(self.pushButton,1,0,2,1)
+        self.layout.addWidget(self.pushButton,1,0,1,1)
+        self.resetButton = QPushButton('Reset')
+        self.resetButton.clicked.connect(self.combinedKnobGroup.reset)
+        self.layout.addWidget(self.resetButton,1,1,1,1)
 
-        for a, s in zip(actuators, strengths):
-            self.addKnob(a, s)
+        if 'actuators' in kwargs and 'strengths' in kwargs:
+            for a, s in zip(kwargs['actuators'], kwargs['strengths']):
+                self.addExistingKnob(a, s)
 
-    def addKnob(self, a, s):
+    def addKnob(self):
+        knob = relative_knob()
+        self.combinedKnobGroup.knobChanged.connect(knob.knobChanged)
+        self.pushButton.clicked.connect(knob.setInitialValue)
+        self.multiKnobGroup.addRow(knob)
+
+    def addExistingKnob(self, a, s):
         knob = relative_knob(a, s)
         self.combinedKnobGroup.knobChanged.connect(knob.knobChanged)
         self.pushButton.clicked.connect(knob.setInitialValue)

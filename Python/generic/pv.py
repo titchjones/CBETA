@@ -1,6 +1,6 @@
 import time, copy, sys
 from epics import caget, caput, cainfo, PV
-import numpy as np
+#import numpy as np
 from PyQt5.QtCore import *
 from  PyQt5.QtGui import *
 from  PyQt5.QtWidgets import *
@@ -13,23 +13,34 @@ def tablePrint(**kwargs):
         print ("{:<8} {:<15}".format(k, v))
 
 class PVObject(QObject):
+
+    newValue = pyqtSignal(float, float)
+
     def __init__(self, pv, parent=None):
         super(PVObject, self).__init__()
         self.name = pv
         self.pv = PV(self.name, callback=self.callback)
         self.dict = OrderedDict()
-        self._value = None
+        self._value = [time.time(), self.pv.get()]
+        self.writeAccess = False
 
     def callback(self, **kwargs):
         self.dict = OrderedDict(kwargs)
-        if 'status' in kwargs and 'value' in kwargs and self.dict['status']:
+        if 'status' in kwargs and 'value' in kwargs and self.dict['status'] is 0:
             if not 'timestamp' in kwargs:
                 timestamp = time.time()
             self._value = [self.dict['timestamp'], self.dict['value']]
+            self.newValue.emit(*self._value)
+
+    def setValue(self, value):
+        self.value = value
 
     @property
     def value(self):
-        return self._value[1]
+        if self._value is None:
+            return self.pv.get()[1]
+        else:
+            return self._value[1]
     @value.setter
     def value(self, val):
         self.put(val)
@@ -41,23 +52,32 @@ class PVObject(QObject):
     def get(self):
         return self._value
 
+    def getTime(self):
+        return self._value[0]
+
+    def getValue(self):
+        return self._value[1] if self._value[1] is not None else 0
+
     def put(self, value):
-        self.pv.put(value)
+        if self.writeAccess:        
+            self.pv.put(value)
 
 class PVBuffer(PVObject):
     def __init__(self, pv, maxlen=1024, parent=None):
         super(PVBuffer, self).__init__(pv=pv, parent = parent)
         self.maxlen = maxlen
-        self.buffer = deque(maxlen=self.maxlen)
         self._length = 0
+        self.buffer = deque(maxlen=self.maxlen)
         self.reset()
+        self.buffer.append(self.pv.get())
 
     def callback(self, **kwargs):
         self.dict = OrderedDict(kwargs)
-        if 'status' in kwargs and 'value' in kwargs and self.dict['status'] == 0:
+        if hasattr(self, 'sum_x1') and 'status' in kwargs and 'value' in kwargs and self.dict['status'] == 0:
             if not 'timestamp' in kwargs:
                 timestamp = time.time()
             self._value = [self.dict['timestamp'], self.dict['value']]
+            self.newValue.emit(*self._value)
             time, val = self._value
             self.buffer.append(self._value)
             self.length += 1
@@ -69,7 +89,7 @@ class PVBuffer(PVObject):
                 self.maxValue = float(self._value[1])
 
     def lastValue(self):
-        return self._value
+        return self._value[1]
 
     def get(self):
         return self.buffer
