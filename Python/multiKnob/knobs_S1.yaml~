@@ -1,0 +1,77 @@
+---
+S1_Dips:
+  actuators:
+  - MS1QUA03_cmd
+  - MS1QUA04_cmd
+  - MS1QUA05_cmd
+  - MS1QUA06_cmd
+  - MD1DIP01_cmd
+  - MS1DPB01_cmd
+  - MS1DIP02_cmd
+  - MS1DIP03_cmd
+  - MS1DIP04_cmd
+  - MS1DIP05_cmd
+  - MS1DIP06_cmd
+  - MS1DIP07_cmd
+  - MS1DPB08_cmd
+  status:
+  - true
+  - true
+  - true
+  - true
+  - true
+  - true
+  - true
+  - true
+  - true
+  - true
+  - true
+  - true
+  - true
+  strengths:
+  - 1.0
+  - 1.0
+  - 1.0
+  - 1.0
+  - 1.0
+  - 1.0
+  - 1.0
+  - 1.0
+  - 1.0
+  - 1.0
+  - 1.0
+  - 1.0
+  - 1.0
+BETX_Knob:
+  actuators:
+  - MS1QUA03_cmd
+  - MS1QUA04_cmd
+  - MS1QUA05_cmd
+  - MS1QUA06_cmd
+  status: [True, True, True, True]
+  strengths: [0.348208, -0.651792, 0.0868648, 0.22778]
+ALFX_Knob:
+  actuators:
+  - MS1QUA03_cmd
+  - MS1QUA04_cmd
+  - MS1QUA05_cmd
+  - MS1QUA06_cmd
+  status: [True, True, True, True]
+  strengths: [0.348208, -0.651792, 0.0868648, 0.22778]
+BETY_Knob:
+  actuators:
+  - MS1QUA03_cmd
+  - MS1QUA04_cmd
+  - MS1QUA05_cmd
+  - MS1QUA06_cmd
+  status: [True, True, True, True]
+  strengths: [-0.0234169, 0.0912179, -0.899194, 0.100806]
+ALFY_Knob:
+  actuators:
+  - MS1QUA03_cmd
+  - MS1QUA04_cmd
+  - MS1QUA05_cmd
+  - MS1QUA06_cmd
+  status: [True, True, True, True]
+  strengths: [0.0921531, -0.907847, 0.03675, -0.185257]
+

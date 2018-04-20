@@ -1,0 +1,43 @@
+S1_Dips:
+  actuators:
+  - MS1QUA03_cmd
+  - MS1QUA04_cmd
+  - MS1QUA05_cmd
+  - MS1QUA06_cmd
+  - MD1DIP01_cmd
+  - MS1DPB01_cmd
+  - MS1DIP02_cmd
+  - MS1DIP03_cmd
+  - MS1DIP04_cmd
+  - MS1DIP05_cmd
+  - MS1DIP06_cmd
+  - MS1DIP07_cmd
+  - MS1DPB08_cmd
+  status:
+  - true
+  - true
+  - true
+  - true
+  - true
+  - true
+  - true
+  - true
+  - true
+  - true
+  - true
+  - true
+  - true
+  strengths:
+  - 1.0
+  - 1.0
+  - 1.0
+  - 1.0
+  - 1.0
+  - 1.0
+  - 1.0
+  - 1.0
+  - 1.0
+  - 1.0
+  - 1.0
+  - 1.0
+  - 1.0

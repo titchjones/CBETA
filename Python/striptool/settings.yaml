@@ -1,0 +1,30 @@
+headings: ['Off','Custom']
+frequencies: [1, 5, 10, 25, 50, 100]
+magnets:
+  'Off':
+    Names: []
+    PVs: {}
+  'Gun':
+    Names: [
+    GA1GHV01_volt_cmd,
+    GA1GHV01_volt_rdbk,
+    GA1GHV01_volt_save,
+    GA1GHV01_voltage,
+    GA1GHV01_voltage_ref,
+    GA1GHV01_voltage_diff,
+    ]
+    PVs:
+      RI: 'custom'
+  'Buncher':
+    Names: [
+        RFBDSP01_cav_setpoint_amp_scaled,
+        RFBDSP01_cav_setpoint_amp_scaled_save,
+        RFBDSP01_relative_ph_save,
+        RFBDSP01_on_crest_ph,
+        RA1CAV01_relative_ph,
+        RA1CAV01_voltage,
+        RA1CAV01_voltage_ref,
+        RA1CAV01_voltage_diff,
+    ]
+    PVs:
+      RI: 'custom'

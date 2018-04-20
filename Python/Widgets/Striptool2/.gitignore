@@ -1,0 +1,7 @@
+Old
+__*/
+*build*/
+*dist*/
+*.dll
+*.exe
+*.spec
