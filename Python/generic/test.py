@@ -72,6 +72,7 @@ class epicsBPM2D(QWidget):
         self.setMinimumWidth(250)
         self.setMinimumHeight(600)
         self.pvh = PVObject(pv+'_H')
+        print (self.pvh.pv.upper_disp_limit)
         self.pvv = PVObject(pv+'_V')
         self.pvi = PVObject(pv+'_I')
         self.pvph = PVObject(pv+'_PH')
@@ -84,6 +85,8 @@ class epicsBPM2D(QWidget):
         self.setLayout(self.layout)
 
         self.bpmWidget = bpmWidget(pv)
+        self.bpmWidget.positionWidget.setScaleX(self.pvh.pv.upper_disp_limit)
+        self.bpmWidget.positionWidget.setScaleY(self.pvv.pv.upper_disp_limit)
         self.layout.addWidget(self.bpmWidget)
         self.updateValues()
         self.pvh.newValue.connect(self.bpmWidget.set_x)

@@ -14,7 +14,8 @@ class positionWidget(QWidget):
         self.pointWidth = 5
         self.value = [0, 0]
         self.refValue = [0,0]
-        self.scale = 10
+        self.scale_x = [-10,10]
+        self.scale_y = [-10,10]
 
     def setValue(self, value):
         self.value = value
@@ -23,7 +24,31 @@ class positionWidget(QWidget):
         self.refValue = value
 
     def setScale(self, scale):
-        self.scale = scale
+        if isinstance(scale, (list, tuple)):
+            self.scale_x = scale
+            self.scale_y = scale
+        else:
+            self.scale_x = [-1*scale, scale]
+            self.scale_y = [-1*scale, scale]
+
+    def setScaleX(self, scale):
+        if isinstance(scale, (list, tuple)):
+            self.scale_x = scale
+        else:
+            self.scale_x = [-1*scale, scale]
+
+    def setScaleY(self, scale):
+        if isinstance(scale, (list, tuple)):
+            self.scale_y = scale
+        else:
+            self.scale_y = [-1*scale, scale]
+
+    @property
+    def range_x(self):
+        return self.scale_x[1] - self.scale_x[0]
+    @property
+    def range_y(self):
+        return self.scale_y[1] - self.scale_y[0]
 
     def paintEvent(self, event=None):
         side = min(self.width(), self.height())
@@ -32,7 +57,7 @@ class positionWidget(QWidget):
 
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        painter.translate(self.width() / 2, self.height() / 2)
+        painter.translate(self.width() / 2 + 10, self.height() / 2)
         painter.scale(side / 230.0, side / 230.0)
 
         painter.setBrush(Qt.NoBrush)
@@ -56,11 +81,11 @@ class positionWidget(QWidget):
 
         painter.setBrush(self.ref_color)
         painter.setPen(self.ref_color)
-        painter.drawEllipse((ref_pos[0] * (100/self.scale)) - self.pointWidth, (ref_pos[1] * -(100/self.scale)) - self.pointWidth,
+        painter.drawEllipse((ref_pos[0] * (100/self.range_x)) - self.pointWidth, (ref_pos[1] * -(100/self.range_y)) - self.pointWidth,
         2*self.pointWidth, 2*self.pointWidth)
 
         painter.setBrush(self.color)
-        painter.drawEllipse((pos[0] * (100/self.scale)) - self.pointWidth, (pos[1] * -(100/self.scale)) - self.pointWidth,
+        painter.drawEllipse((pos[0] * (100/self.range_x)) - self.pointWidth, (pos[1] * -(100/self.range_y)) - self.pointWidth,
         2*self.pointWidth, 2*self.pointWidth)
 
 #        painter.save()
@@ -77,11 +102,11 @@ class positionWidget(QWidget):
         font.setPointSize(font.pointSize() * 1.2)
         painter.setFont(font)
 
-        painter.drawText(QRectF(-107, 102, 30, 20), str(-1*self.scale))
-        painter.drawText(QRectF(95, 102, 30, 20), str(1*self.scale))
+        painter.drawText(QRectF(-107, 102, 30, 20), str(self.scale_x[0]))
+        painter.drawText(QRectF(90, 102, 30, 20), str(1*self.scale_x[1]))
 
-        painter.drawText(QRectF(-120, 90, 30, 20), str(-1*self.scale))
-        painter.drawText(QRectF(-115, -105, 30, 20), str(1*self.scale))
+        painter.drawText(QRectF(-130, 90, 30, 20), str(self.scale_y[0]))
+        painter.drawText(QRectF(-125, -105, 30, 20), str(1*self.scale_y[1]))
 
 def spin(*args, **kwargs):
     spinValue = [20*random.random() - 10, 20*random.random() - 10]
