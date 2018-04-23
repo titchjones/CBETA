@@ -18,7 +18,8 @@ class gauge(QWidget):
         self.gauge.setProperty('gauge_value',0)
         self.layout.addWidget(self.gaugeWidget)
 
-    def setValue(self, value):
+    def setValue(self, time, value):
+        #print ('guage value = ', value)
         self.gauge.setProperty('gauge_value',value)
 
 class mainWindow(QMainWindow):

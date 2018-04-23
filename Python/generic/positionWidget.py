@@ -40,6 +40,13 @@ class positionWidget(QWidget):
 
         painter.drawRect(-100,-100, 2*100, 2*100)
 
+        for i in range(20):
+            x = -100 + i * 10
+            painter.drawLine(x,100,x,98)
+            painter.drawLine(x,-100,x,-98)
+            painter.drawLine(-100,x,-98,x)
+            painter.drawLine(100,x,98,x)
+
         painter.drawLine(-100,0,100,0)
         painter.drawLine(-100,50,100,50)
         painter.drawLine(-100,-50,100,-50)
@@ -56,21 +63,25 @@ class positionWidget(QWidget):
         painter.drawEllipse((pos[0] * (100/self.scale)) - self.pointWidth, (pos[1] * -(100/self.scale)) - self.pointWidth,
         2*self.pointWidth, 2*self.pointWidth)
 
-        painter.save()
-        painter.setPen(QColor(0,0,0))
-        painter.rotate(90)
-        for i in range(2):
-            painter.drawLine((pos[0] * (100/self.scale)) - self.pointWidth/2, (pos[1] * -(100/self.scale)) - self.pointWidth/2,
-            (pos[0] * (100/self.scale)) + self.pointWidth/2, (pos[1] * -(100/self.scale)) + self.pointWidth/2)
-            painter.rotate(90)
-        painter.restore()
+#        painter.save()
+#        painter.setPen(QColor(0,0,0))
+#        painter.rotate(180)
+#        for i in range(2):
+#            painter.drawLine(-1*((pos[0] * (100/self.scale)) - self.pointWidth/2), -1*((pos[1] * -(100/self.scale)) - self.pointWidth/2),
+#            -1*((pos[0] * (100/self.scale)) + self.pointWidth/2), -1*((pos[1] * -(100/self.scale)) + self.pointWidth/2))
+#            painter.rotate(180)
+#        painter.restore()
 
         painter.setPen(QColor(0,0,0))
         font = painter.font()
         font.setPointSize(font.pointSize() * 1.2)
         painter.setFont(font)
-        painter.drawText(QRectF(-110, 100, 30, 20), str(-1*self.scale))
-        painter.drawText(QRectF(92, 100, 30, 20), str(1*self.scale))
+
+        painter.drawText(QRectF(-107, 102, 30, 20), str(-1*self.scale))
+        painter.drawText(QRectF(95, 102, 30, 20), str(1*self.scale))
+
+        painter.drawText(QRectF(-120, 90, 30, 20), str(-1*self.scale))
+        painter.drawText(QRectF(-115, -105, 30, 20), str(1*self.scale))
 
 def spin(*args, **kwargs):
     spinValue = [20*random.random() - 10, 20*random.random() - 10]

@@ -33,19 +33,19 @@ class phaseWidget(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         painter.translate(self.width() / 2, self.height() / 2 / 0.95)
-        painter.scale(side / 200.0 * 0.9, side / 200.0 * 0.9)
+        painter.scale(side / 200.0 * 0.95, side / 200.0 * 0.95)
 
         painter.setPen(Qt.NoPen)
 
         painter.setBrush(self.ref_color)
         painter.save()
-        painter.rotate(180 + self.refValue)
+        painter.rotate(self.refValue)
         painter.drawConvexPolygon(self.hand)
         painter.restore()
 
         painter.setBrush(self.color)
         painter.save()
-        painter.rotate(180 + self.value)
+        painter.rotate(self.value)
         painter.drawConvexPolygon(self.hand)
         painter.restore()
 
@@ -70,10 +70,10 @@ class phaseWidget(QWidget):
         font = painter.font()
         font.setPointSize(font.pointSize() * 1.2)
         painter.setFont(font)
-        painter.drawText(QRectF(-5, 100, 30, 20), '0°')
-        painter.drawText(QRectF(-12.5, -130, 35, 20), '180°')
-        painter.drawText(QRectF(-125, -10, 30, 20), '90°')
-        painter.drawText(QRectF(105, -10, 35, 20), '270°')
+        painter.drawText(QRectF(-7.5, 100, 30, 20), '180°')
+        painter.drawText(QRectF(-5, -110, 35, 20), '0°')
+        painter.drawText(QRectF(-125, -5, 30, 20), '270°')
+        painter.drawText(QRectF(105, -5, 35, 20), '90°')
 
 
 if __name__ == '__main__':

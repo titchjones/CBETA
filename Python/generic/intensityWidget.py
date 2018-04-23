@@ -37,11 +37,11 @@ class intensityWidget(QWidget):
 
         painter.setBrush(self.ref_color)
         painter.setPen(self.ref_color)
-        painter.drawRect(0, 90, 68, -1.0*self.ref_value*2*90)
+        painter.drawRect(0, 90, 68, -1.0*2*90)
 
         painter.setBrush(self.color)
         painter.setPen(self.color)
-        painter.drawRect(-70, 90, 68, -1.0*self.value*2*90)
+        painter.drawRect(-70, 90, 68, -1.0*(self.value/self.ref_value)*2*90)
 
 def spin(*args, **kwargs):
     spinValue = random.random()

@@ -14,6 +14,8 @@ class bpmWidget(QWidget):
         self.setMinimumSize(250,600)
         self._x = 0
         self._y = 0
+        self._x_ref = 0
+        self._y_ref = 0
         self._I = 0
         self._I_ref = 1
         self._ph = 0
@@ -53,6 +55,9 @@ class bpmWidget(QWidget):
     def x(self, value):
         self._x = value
         self.updatePosition()
+    def set_x(self, time, value):
+        self._x = value
+        self.updatePosition()
     @property
     def y(self):
         return self._y
@@ -60,9 +65,36 @@ class bpmWidget(QWidget):
     def y(self, value):
         self._y = value
         self.updatePosition()
+    def set_y(self, time, value):
+        self._y = value
+        self.updatePosition()
+    @property
+    def x_ref(self):
+        return self._x_ref
+    @x_ref.setter
+    def x_ref(self, value):
+        self._x_ref = value
+        self.updateReferencePosition()
+    def set_x_ref(self, time, value):
+        self._x_ref = value
+        self.updateReferencePosition()
+    @property
+    def y_ref(self):
+        return self._y_ref
+    @y_ref.setter
+    def y_ref(self, value):
+        self._y_ref = value
+        self.updateReferencePosition()
+    def set_y_ref(self, time, value):
+        self._y_ref = value
+        self.updateReferencePosition()
 
     def updatePosition(self):
         self.positionWidget.setValue([self.x, self.y])
+        self.positionWidget.update()
+    def updateReferencePosition(self):
+        self.positionWidget.setReferenceValue([self.x_ref, self.y_ref])
+        self.positionWidget.update()
 
     def setPositionScale(self, scale):
         self.positionWidget.setScale(scale)
@@ -74,9 +106,13 @@ class bpmWidget(QWidget):
     def I(self, value):
         self._I = value
         self.updateIntensity()
+    def set_I(self, time, value):
+        self._I = value
+        self.updateIntensity()
 
     def updateIntensity(self):
         self.intensityWidget.setValue(self.I)
+        self.intensityWidget.update()
 
     @property
     def I_ref(self):
@@ -85,9 +121,13 @@ class bpmWidget(QWidget):
     def I_ref(self, value):
         self._I_ref = value
         self.updateReferenceIntensity()
+    def set_I_ref(self, time, value):
+        self._I_ref = value
+        self.updateReferenceIntensity()
 
     def updateReferenceIntensity(self):
         self.intensityWidget.setReferenceValue(self.I_ref)
+        self.intensityWidget.update()
 
     @property
     def phase(self):
@@ -96,9 +136,28 @@ class bpmWidget(QWidget):
     def phase(self, value):
         self._ph = value
         self.updatePhase()
+    def set_phase(self, time, value):
+        self._ph = value
+        self.updatePhase()
 
     def updatePhase(self):
         self.phaseWidget.setValue(self.phase)
+        self.phaseWidget.update()
+
+    @property
+    def phase_ref(self):
+        return self._ph_ref
+    @phase_ref.setter
+    def phase_ref(self, value):
+        self._ph_ref = value
+        self.updateReferencePhase()
+    def set_phase_ref(self, time, value):
+        self._ph_ref = value
+        self.updateReferencePhase()
+
+    def updateReferencePhase(self):
+        self.phaseWidget.setReferenceValue(self.phase_ref)
+        self.phaseWidget.update()
 
 class bpmTable(QWidget):
     def __init__(self, bpmList=[], parent=None):

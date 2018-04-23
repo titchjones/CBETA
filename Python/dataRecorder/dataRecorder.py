@@ -33,7 +33,7 @@ def currentWorkFolder(today=None,createdirectory=False):
     day = str(day) if day >= 10 else '0' + str(day)
     hour = str(hour) if hour >= 10 else '0' + str(hour)
     minute = str(minute) if minute >= 10 else '0' + str(minute)
-    folder = '/tmp/'+str(year)+'/'+str(month)+'/'+str(day)+'/'#+str(hour)+str(minute)
+    folder = os.path.dirname( os.path.abspath(__file__))+str(year)+'/'+str(month)+'/'+str(day)+'/'#+str(hour)+str(minute)
     if not os.path.exists(folder) and createdirectory:
         os.makedirs(folder)
     return folder, datetuple[2]
