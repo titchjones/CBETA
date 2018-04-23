@@ -5,21 +5,27 @@ from PyQt5.QtWidgets import QApplication, QWidget
 
 class phaseWidget(QWidget):
     hand = QPolygon([
-        QPoint(4, 0),
-        QPoint(-4, 0),
+        QPoint(4, 7),
+        QPoint(0, 14),
+        QPoint(-4, 7),
         QPoint(-1, -80),
         QPoint(1, -80)
     ])
 
-    color = QColor(0, 0, 0)
+    color = QColor(139, 177, 239)
+    ref_color = QColor(63, 82, 114)
 
     def __init__(self, parent=None):
         super(phaseWidget, self).__init__(parent)
         self.resize(200, 200)
         self.value = 0
+        self.refValue = 180
 
     def setValue(self, value):
         self.value = value
+
+    def setReferenceValue(self, value):
+        self.refValue = value
 
     def paintEvent(self, event):
         side = 0.8 * min(self.width(), self.height())
@@ -30,22 +36,37 @@ class phaseWidget(QWidget):
         painter.scale(side / 200.0 * 0.9, side / 200.0 * 0.9)
 
         painter.setPen(Qt.NoPen)
-        painter.setBrush(self.color)
 
+        painter.setBrush(self.ref_color)
+        painter.save()
+        painter.rotate(180 + self.refValue)
+        painter.drawConvexPolygon(self.hand)
+        painter.restore()
+
+        painter.setBrush(self.color)
         painter.save()
         painter.rotate(180 + self.value)
         painter.drawConvexPolygon(self.hand)
         painter.restore()
-        painter.save()
-        painter.setPen(self.color)
 
-        for i in range(12):
+        painter.save()
+        painter.setPen(QColor(0,0,0))
+
+        for i in range(27):
+            painter.drawLine(88, 0, 92, 0)
+            painter.rotate(15)
+
+        painter.restore()
+        painter.save()
+        painter.setPen(QColor(0,0,0))
+        painter.rotate(0.0)
+        for i in range(9):
             painter.drawLine(88, 0, 96, 0)
-            painter.rotate(30.0)
+            painter.rotate(45.0)
 
         painter.restore()
 
-        painter.setPen(self.color)
+        painter.setPen(QColor(0,0,0))
         font = painter.font()
         font.setPointSize(font.pointSize() * 1.2)
         painter.setFont(font)

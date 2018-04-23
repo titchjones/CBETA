@@ -5,17 +5,22 @@ import random
 
 class positionWidget(QWidget):
 
-    color = QColor(255, 0, 0)
+    color = QColor(139, 177, 239)
+    ref_color = QColor(63, 82, 114)
 
     def __init__(self, parent=None):
         super(positionWidget, self).__init__(parent)
         self.resize(200, 200)
-        self.pointWidth = 10
+        self.pointWidth = 5
         self.value = [0, 0]
+        self.refValue = [0,0]
         self.scale = 10
 
     def setValue(self, value):
         self.value = value
+
+    def setReferenceValue(self, value):
+        self.refValue = value
 
     def setScale(self, scale):
         self.scale = scale
@@ -23,6 +28,7 @@ class positionWidget(QWidget):
     def paintEvent(self, event=None):
         side = min(self.width(), self.height())
         pos = self.value
+        ref_pos = self.refValue
 
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
@@ -41,19 +47,30 @@ class positionWidget(QWidget):
         painter.drawLine(50, 100,50, -100)
         painter.drawLine(0,-100, 0, 100)
 
+        painter.setBrush(self.ref_color)
+        painter.setPen(self.ref_color)
+        painter.drawEllipse((ref_pos[0] * (100/self.scale)) - self.pointWidth, (ref_pos[1] * -(100/self.scale)) - self.pointWidth,
+        2*self.pointWidth, 2*self.pointWidth)
+
         painter.setBrush(self.color)
         painter.drawEllipse((pos[0] * (100/self.scale)) - self.pointWidth, (pos[1] * -(100/self.scale)) - self.pointWidth,
         2*self.pointWidth, 2*self.pointWidth)
+
+        painter.save()
+        painter.setPen(QColor(0,0,0))
+        painter.rotate(90)
+        for i in range(2):
+            painter.drawLine((pos[0] * (100/self.scale)) - self.pointWidth/2, (pos[1] * -(100/self.scale)) - self.pointWidth/2,
+            (pos[0] * (100/self.scale)) + self.pointWidth/2, (pos[1] * -(100/self.scale)) + self.pointWidth/2)
+            painter.rotate(90)
+        painter.restore()
 
         painter.setPen(QColor(0,0,0))
         font = painter.font()
         font.setPointSize(font.pointSize() * 1.2)
         painter.setFont(font)
         painter.drawText(QRectF(-110, 100, 30, 20), str(-1*self.scale))
-        painter.drawText(QRectF(90, 100, 30, 20), str(1*self.scale))
-        # painter.drawText(QRectF(90, -120, 30, 20), str(1*self.scale))
-        # painter.drawText(QRectF(-125, -10, 30, 20), '90°')
-        # painter.drawText(QRectF(105, -10, 30, 20), '270°')
+        painter.drawText(QRectF(92, 100, 30, 20), str(1*self.scale))
 
 def spin(*args, **kwargs):
     spinValue = [20*random.random() - 10, 20*random.random() - 10]

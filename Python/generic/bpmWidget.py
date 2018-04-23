@@ -5,10 +5,13 @@ from PyQt5.QtWidgets import *
 from positionWidget import *
 from intensityWidget import *
 from phaseWidget import *
+from collections import OrderedDict
 
 class bpmWidget(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, bpm=None, parent=None):
         super(bpmWidget, self).__init__(parent)
+        self.name = bpm
+        self.setMinimumSize(250,600)
         self._x = 0
         self._y = 0
         self._I = 0
@@ -21,9 +24,27 @@ class bpmWidget(QWidget):
 
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
+        self.label = QLabel(self.name)
+        f = self.label.font()
+        f.setPointSize(14)
+        f.setBold(True)
+        self.label.setFont(f)
+        self.label.setAlignment(Qt.AlignHCenter| Qt.AlignTop)
+        self.label.setMaximumHeight(25)
+        self.layout.addWidget(self.label)
         self.layout.addWidget(self.positionWidget,2)
         self.layout.addWidget(self.phaseWidget,2)
         self.layout.addWidget(self.intensityWidget,1)
+
+    def setColor(self, color):
+        self.positionWidget.color = color
+        self.phaseWidget.color = color
+        self.intensityWidget.color = color
+
+    def setReferenceColor(self, color):
+        self.positionWidget.ref_color = color
+        self.phaseWidget.ref_color = color
+        self.intensityWidget.ref_color = color
 
     @property
     def x(self):
@@ -79,16 +100,24 @@ class bpmWidget(QWidget):
     def updatePhase(self):
         self.phaseWidget.setValue(self.phase)
 
+class bpmTable(QWidget):
+    def __init__(self, bpmList=[], parent=None):
+        super(bpmTable, self).__init__(parent)
+        self.layout = QHBoxLayout()
+        self.setLayout(self.layout)
+
+        self.bpmWidgets = OrderedDict([])
+
+        for bpm in bpmList:
+            w = bpmWidget(bpm)
+            self.bpmWidgets[bpm] = w
+            self.layout.addWidget(w)
+
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     mw = QMainWindow()
-    mw.resize(1.25*250,1.25*600)
-    bpm = bpmWidget()
-    bpm.setPositionScale(20)
-    bpm.x = 3
-    bpm.y = 7
-    bpm.I = 0.43
-    bpm.phase = 165
+    # mw.resize(1.25*250,1.25*600)
+    bpm = bpmTable(['BPM 1','BPM 2','BPM 3','BPM 4','BPM 5','BPM 6','BPM 7'])
     mw.setCentralWidget(bpm)
     mw.show()
     sys.exit(app.exec_())
