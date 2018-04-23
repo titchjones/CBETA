@@ -37,8 +37,8 @@ class PVObject(QObject):
 
     @property
     def value(self):
-        if self._value is None:
-            return self.pv.get()[1]
+        if self._value[1] is None:
+            return self.pv.get()[1] if self.pv.get() is not None else 0
         else:
             return self._value[1]
     @value.setter
@@ -59,7 +59,7 @@ class PVObject(QObject):
         return self._value[1] if self._value[1] is not None else 0
 
     def put(self, value):
-        if self.writeAccess:        
+        if self.writeAccess:
             self.pv.put(value)
 
 class PVBuffer(PVObject):

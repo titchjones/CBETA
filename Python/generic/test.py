@@ -34,7 +34,7 @@ class testPV(QMainWindow):
         self.layout.addWidget(self.groupBox)
 
         for pv in PVs:
-            self.groupBox.addWidget(epicsSliderWidget(PVBuffer(pv)))
+            self.groupBox.addWidget(epicsSliderWidget(PVObject(pv)))
 
 class epicsWidget(QWidget):
     def __init__(self, pv=None, parent = None):
@@ -70,7 +70,7 @@ class epicsTextWidget(epicsWidget):
 
         self.label = QLabel(self.pv.name)
         self.textBox = QLineEdit()
-        self.textBox.setText("{0:.3f}".format(self.pv.lastValue()))
+        self.textBox.setText("{0:.3f}".format(self.pv.value))
         self.textBox.setReadOnly(True)
         self.textBox.setMinimumWidth(40)
         self.textBox.setMaximumWidth(60)
@@ -132,9 +132,9 @@ class highlightingGroupBox(QGroupBox):
     def mouseMoveEvent(self, event):
         self.focusWidget.setFocus()
         self.setStyleSheet("""
-               QGroupBox 
-               { 
-                   background-color: rgb(255, 255,255); 
+               QGroupBox
+               {
+                   background-color: rgb(255, 255,255);
                    border:1px solid rgb(50, 50, 50);
                    border-radius: 9px;
                    margin-top: 0.5em;
@@ -173,7 +173,7 @@ class QDoubleSlider(QSlider):
     def __init__(self, multiplier=100, *args, **kwargs):
         super(QSlider, self).__init__(*args, **kwargs)
         self.multiplier = multiplier
-      
+
     def setRange(self, min, max):
         super(QDoubleSlider, self).setRange(self.multiplier*min, self.multiplier*max)
 
