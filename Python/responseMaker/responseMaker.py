@@ -64,7 +64,7 @@ class responseMaker(QMainWindow):
 
 class monitor(PVBuffer):
 
-    emitAverageSignal = pyqtSignal(str, list)
+    emitAverageSignal = pyqtSignal(str, str, list)
 
     def __init__(self, pv=None, actuator=None, parent=None):
         super(monitor, self).__init__(pv, parent)
@@ -73,29 +73,17 @@ class monitor(PVBuffer):
         #self._value = random.random()-0.5
 
     def value(self):
-        return [self.actuator.name, [self.actuator.value(), self.mean]]
+        return [self.actuator.name, self.name, [self.actuator.value, self.mean]]
 
     def emitAverage(self):
-        a, v = self.value()
-        self.emitAverageSignal.emit(a,v)
+        a, m, v = self.value()
+        self.emitAverageSignal.emit(a,m,v)
 
-#    def reset(self):
-#        pass
-
-#    def mean(self):
-#        return 0.001*self.actuator.value()**2 * self._value
-
-class corrector(QObject):
-    def __init__(self, pv=None, parent=None):
-        super(corrector, self).__init__(parent)
+class corrector(PVObject):
+    def __init__(self, pv=None, rdbk=None, parent=None):
+        super(corrector, self).__init__(pv, rdbk, parent)
         self.name = pv
-        self._value = 0
-
-    def value(self):
-        return self._value
-
-    def setValue(self, value):
-        self._value = value
+        self.writeAccess = True
 
 class recordRMData(tables.IsDescription):
     actuator  = tables.Float64Col()     # double (double-precision)
@@ -106,11 +94,7 @@ class responsePlotterTab(QWidget):
     def __init__(self, actuator=None, parent=None):
         super(responsePlotterTab, self).__init__(parent)
         self.name = actuator
-        self.pv = corrector(self.name)
-
-        self.monitors = []
-        for m in monitors:
-            self.monitors.append(monitor(m, self.pv))
+        self.pv = corrector(self.name, self.name.replace('_cmd','_rdbk'))
 
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
@@ -120,6 +104,10 @@ class responsePlotterTab(QWidget):
         self.runButton.setMaximumWidth(100)
         self.runButton.clicked.connect(self.runResponse)
         self.buttonLayout.addWidget(self.runButton)
+        self.progressBar = QProgressBar()
+        self.progressBar.setMaximumWidth(100)
+        self.progressBar.hide()
+        self.buttonLayout.addWidget(self.progressBar)
         self.saveButton = QPushButton('Save Data')
         self.saveButton.setMaximumWidth(100)
         self.saveButton.clicked.connect(self.saveData)
@@ -130,41 +118,96 @@ class responsePlotterTab(QWidget):
         self.plotTabs = QTabWidget()
         self.plots = {}
         self.layout.addWidget(self.plotTabs)
-        for m in self.monitors:
-            plot = responsePlot(actuator)
-            self.plots[m.name] = plot
-            self.plotTabs.addTab(plot, m.name)
-            m.emitAverageSignal.connect(plot.newBPMReading)
+
+        self.horizontalPlot = responsePlot(self.name)
+        self.plotTabs.addTab(self.horizontalPlot, 'Horizontal')
+        self.verticalPlot = responsePlot(self.name)
+        self.plotTabs.addTab(self.verticalPlot, 'Vertical')
+        self.phasePlot = responsePlot(self.name)
+        self.plotTabs.addTab(self.phasePlot, 'Phase')
+        self.intensityPlot = responsePlot(self.name)
+        self.plotTabs.addTab(self.intensityPlot, 'Intensity')
+
+        self.monitors = []
+        type = '_H'
+        for m in monitors:
+            self.monitors.append(monitor(m+type, self.pv))
+            self.horizontalPlot.newLine(m+type)
+            self.monitors[-1].emitAverageSignal.connect(self.horizontalPlot.newBPMReading)
+        type = '_V'
+        for m in monitors:
+            self.monitors.append(monitor(m+type, self.pv))
+            self.verticalPlot.newLine(m+type)
+            self.monitors[-1].emitAverageSignal.connect(self.verticalPlot.newBPMReading)
+        type = '_PH'
+        for m in monitors:
+            self.monitors.append(monitor(m+type, self.pv))
+            self.phasePlot.newLine(m+type)
+            self.monitors[-1].emitAverageSignal.connect(self.phasePlot.newBPMReading)
+        type = '_I'
+        for m in monitors:
+            self.monitors.append(monitor(m+type, self.pv))
+            self.intensityPlot.newLine(m+type)
+            self.monitors[-1].emitAverageSignal.connect(self.intensityPlot.newBPMReading)
 
     def saveData(self):
         self.h5file = tables.open_file(self.name+'.h5', mode = "w", title = self.name)
         self.rootnode = self.h5file.get_node('/')
-        group = self.h5file.create_group('/', 'Data', 'RM Data')
-        for m in self.monitors:
-            table = self.h5file.create_table(group, m.name, recordRMData, m.name)
-            row = table.row
-            data = self.plots[m.name].data
-            for a, m in data:
-                row['actuator'], row['monitor'] = a, m
-                row.append()
-            table.flush()
+        for m in ['horizontal','vertical','phase','intensity']:
+            group = self.h5file.create_group('/', m, m+' Data')
+            self.savePlotData(group, getattr(self,m+'Plot'))
         self.h5file.close()
 
+    def savePlotData(self, group, plot):
+        for d in plot.data:
+            table = self.h5file.create_table(group, d, recordRMData, d)
+            row = table.row
+            data = plot.data[d]
+            self.saveRow(row, data)
+            table.flush()
+
+    def saveRow(self, row, data):
+        for a, m in data:
+            row['actuator'], row['monitor'] = a, m
+            row.append()
+
+    def resetPlots(self):
+        self.horizontalPlot.reset()
+        self.verticalPlot.reset()
+        self.phasePlot.reset()
+        self.intensityPlot.reset()
+
     def runResponse(self):
+        global app
+        self.resetPlots()
+        self.runButton.setEnabled(False)
+        self.runButton.clicked.disconnect(self.runResponse)
         min = -0.1#self.pv.pv.lower_disp_limit
         max = 0.1#self.pv.pv.upper_disp_limit
         range = self.generateRange(min, max)
-        startValue = self.pv.value()
-        for i in range:
+        self.progressBar.setMinimum(0)
+        self.progressBar.setMaximum(len(range))
+        self.progressBar.setValue(0)
+        self.runButton.hide()
+        self.progressBar.show()
+        startValue = self.pv.value
+        for j, i in enumerate(range):
             self.pv.setValue(startValue+i)
             for m in self.monitors:
                 m.reset()
             length = np.min([m.length for m in self.monitors])
-            while length < 1:
+            while length < 3:
                 length = np.min([m.length for m in self.monitors])
+                app.processEvents()
+            # print ('i = ', i)
             for m in self.monitors:
                 m.emitAverage()
-        self.pv.setValue(0)
+            self.progressBar.setValue(j)
+        self.pv.value = startValue
+        self.runButton.setEnabled(True)
+        self.runButton.clicked.connect(self.runResponse)
+        self.runButton.show()
+        self.progressBar.hide()
 
     def generateRange(self, min, max):
         data = []
@@ -183,30 +226,39 @@ class responsePlot(pg.PlotWidget):
         super(responsePlot, self).__init__(parent)
         self.actuator = actuator
         self.plotItem = self.getPlotItem()
-        self.data = np.empty((0,2),int)
-        self.bpmPlot = self.plotItem.plot(symbol='+', symbolPen='r')
-        self.fittedPlot = self.plotItem.plot(pen='b')
         self.plotItem.showGrid(x=True, y=True)
+        self.bpmPlots = {}
+        self.fittedPlots = {}
+        self.data = {}
+        self.color = 0
+
+    def newLine(self, monitor):
+        self.data[monitor] = np.empty((0,2),int)
+        self.bpmPlots[monitor] = self.plotItem.plot(symbol='+', symbolPen=pg.mkColor(self.color))
+        self.fittedPlots[monitor] = self.plotItem.plot(pen=pg.mkColor(self.color))
+        self.color += 1
 
     def reset(self):
-        self.data = np.empty((0,2),int)
-        self.bpmPlot.clear()
-        self.fittedPlot.clear()
+        for p in self.bpmPlots:
+            self.data[p] = np.empty((0,2),int)
+            self.bpmPlots[p].clear()
+            self.fittedPlots[p].clear()
 
-    def newBPMReading(self, actuator, data):
-        if actuator == self.actuator:
-            self.data = np.append(self.data, [data], axis=0)
-            self.bpmPlot.setData(self.data)
+    def newBPMReading(self, actuator, monitor, data):
+        if actuator == self.actuator and monitor in self.data:
+            self.data[monitor] = np.append(self.data[monitor], [data], axis=0)
+            self.bpmPlots[monitor].setData(self.data[monitor])
 
-    def newFittedReading(self, data):
-        self.fittedPlot.setData(np.array(data))
+    def newFittedReading(self, actuator, monitor, data):
+        if actuator == self.actuator and monitor in self.data:
+            self.fittedPlots[monitor].setData(np.array(data))
 
 def main():
-   app = QApplication(sys.argv)
-   ex = responseMaker()
-   ex.show()
-   # ex.testSleep()
-   sys.exit(app.exec_())
+    global app
+    app = QApplication(sys.argv)
+    ex = responseMaker()
+    ex.show()
+    sys.exit(app.exec_())
 
 if __name__ == '__main__':
    main()

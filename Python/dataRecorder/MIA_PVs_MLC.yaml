@@ -1,0 +1,42 @@
+RF1:
+    RD1CAV01_relative_ph:
+        timer: 10
+    RD1CAV01_voltage:
+        timer: 10
+    RD1CAV01_voltage_ref:
+        timer: 10
+RF2:
+    RD1CAV02_relative_ph:
+        timer: 10
+    RD1CAV02_voltage:
+        timer: 10
+    RD1CAV02_voltage_ref:
+        timer: 10
+RF3:
+    RD1CAV03_relative_ph:
+        timer: 10
+    RD1CAV03_voltage:
+        timer: 10
+    RD1CAV03_voltage_ref:
+        timer: 10
+RF4:
+    RD1CAV04_relative_ph:
+        timer: 10
+    RD1CAV04_voltage:
+        timer: 10
+    RD1CAV04_voltage_ref:
+        timer: 10
+RF5:
+    RD1CAV05_relative_ph:
+        timer: 10
+    RD1CAV05_voltage:
+        timer: 10
+    RD1CAV05_voltage_ref:
+        timer: 10
+RF6:
+    RD1CAV06_relative_ph:
+        timer: 10
+    RD1CAV06_voltage:
+        timer: 10
+    RD1CAV06_voltage_ref:
+        timer: 10

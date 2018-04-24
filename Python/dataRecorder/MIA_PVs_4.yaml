@@ -1,0 +1,41 @@
+IB2BPC01:
+    IB2BPC01_H:
+        timer: 10
+    IB2BPC01_V:
+        timer: 10
+    IB2BPC01_PH:
+        timer: 10
+    IB2BPC01_I:
+        timer: 10
+IB2BPC02:
+    IB2BPC02_H:
+        timer: 10
+    IB2BPC02_V:
+        timer: 10
+    IB2BPC02_PH:
+        timer: 10
+    IB2BPC02_I:
+        timer: 10
+IB2BPC03:
+    IB2BPC03_H:
+        timer: 10
+    IB2BPC03_V:
+        timer: 10
+    IB2BPC03_PH:
+        timer: 10
+    IB2BPC03_I:
+        timer: 10
+ID1BPC01:
+    ID1BPC01_H:
+        timer: 10
+    ID1BPC01_V:
+        timer: 10
+    ID1BPC01_PH:
+        timer: 10
+    ID1BPC01_I:
+        timer: 10
+MD1:    
+    MD1DIP01_rdbk:
+        timer: 10
+    MS1DPB01_rdbk:
+        timer: 10

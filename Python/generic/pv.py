@@ -16,13 +16,16 @@ class PVObject(QObject):
 
     newValue = pyqtSignal(float, float)
 
-    def __init__(self, pv, parent=None):
+    def __init__(self, pv, readback=None, parent=None):
         super(PVObject, self).__init__()
         self.name = pv
         self.pv = PV(self.name, callback=self.callback)
         self.dict = OrderedDict()
         self._value = [time.time(), self.pv.get()]
         self.writeAccess = False
+        self.readBackName = readback
+        if not self.readBackName is None:
+            self.readBackPV = PV(self.readBackName)
 
     def callback(self, **kwargs):
         self.dict = OrderedDict(kwargs)
@@ -62,8 +65,12 @@ class PVObject(QObject):
         ntries = 0
         if self.writeAccess:
             self.pv.put(value)
-            while abs((self.get()/self.value)-1) > 0.005 and ntries < 10:
-                time.sleep(0.01)
+            if not self.readBackName is None:
+                rbkValue = self.readBackPV.get()
+                while abs(rbkValue - self.value) > 0.01 and ntries < 10:
+                    time.sleep(0.05)
+                    rbkValue = self.readBackPV.get()
+                    ntries += 1
 
 
 class PVBuffer(PVObject):

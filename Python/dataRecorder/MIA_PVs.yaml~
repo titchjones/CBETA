@@ -1,0 +1,51 @@
+IA1BPA01:
+    IA1BPA01_H:
+        timer: 1
+    IA1BPA01_V:
+        timer: 1
+    IA1BPA01_PH:
+        timer: 1
+    IA1BPA01_I:
+        timer: 1
+IA1BPB01:
+    IA1BPB01_H:
+        timer: 1
+    IA1BPB01_V:
+        timer: 1
+    IA1BPB01_PH:
+        timer: 1
+    IA1BPB01_I:
+        timer: 1
+MA2C:
+    MA2CHC01_rdbk:
+        timer: 1
+    MA2CVC01_rdbk:
+        timer: 1
+MA3:
+    MA3QUA01_rdbk:
+        timer: 1
+    MA3CHD01_rdbk:
+        timer: 1
+    MA3CVD01_rdbk:
+        timer: 1
+    MA3QUA02_rdbk:
+        timer: 1
+    MA3CHD02_rdbk:
+        timer: 1
+    MA3CVD02_rdbk:
+        timer: 1
+    MA3QUA03_rdbk:
+        timer: 1
+    MA3CHD03_rdbk:
+        timer: 1
+    MA3CVD03_rdbk:
+        timer: 1
+    MA3QUA04_rdbk:
+        timer: 1
+    MA3CHD04_rdbk:
+        timer: 1
+    MA3CVD04_rdbk:
+        timer: 1
+    MA3DPA01_rdbk:
+        timer: 1
+

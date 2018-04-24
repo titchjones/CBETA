@@ -1,0 +1,45 @@
+RF1:
+    RF1DSP01_relative_ph:
+        timer: 10
+    RA2CAV01_relative_ph:
+        timer: 10
+    RA2CAV01_voltage:
+        timer: 10
+    RA2CAV01_voltage_ref:
+        timer: 10
+RF2:
+    RF2DSP01_relative_ph:
+        timer: 10
+    RA2CAV02_relative_ph:
+        timer: 10
+    RA2CAV02_voltage:
+        timer: 10
+    RA2CAV02_voltage_ref:
+        timer: 10
+RF3:
+    RF3DSP01_relative_ph:
+        timer: 10
+    RA2CAV03_relative_ph:
+        timer: 10
+    RA2CAV03_voltage:
+        timer: 10
+    RA2CAV03_voltage_ref:
+        timer: 10
+RF4:
+    RF4DSP01_relative_ph:
+        timer: 10
+    RA2CAV04_relative_ph:
+        timer: 10
+    RA2CAV04_voltage:
+        timer: 10
+    RA2CAV04_voltage_ref:
+        timer: 10
+RF5:
+    RF5DSP01_relative_ph:
+        timer: 10
+    RA2CAV05_relative_ph:
+        timer: 10
+    RA2CAV05_voltage:
+        timer: 10
+    RA2CAV05_voltage_ref:
+        timer: 10

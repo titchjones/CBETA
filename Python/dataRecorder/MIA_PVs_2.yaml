@@ -1,0 +1,51 @@
+IA3BPC01:
+    IA3BPC01_H:
+        timer: 10
+    IA3BPC01_V:
+        timer: 10
+    IA3BPC01_PH:
+        timer: 10
+    IA3BPC01_I:
+        timer: 10
+IA3BPC02:
+    IA3BPC02_H:
+        timer: 10
+    IA3BPC02_V:
+        timer: 10
+    IA3BPC02_PH:
+        timer: 10
+    IA3BPC02_I:
+        timer: 10
+IA3BPC03:
+    IA3BPC03_H:
+        timer: 10
+    IA3BPC03_V:
+        timer: 10
+    IA3BPC03_PH:
+        timer: 10
+    IA3BPC03_I:
+        timer: 10
+MB1:
+    MB1QUB01_rdbk:
+        timer: 10
+    MB1CHG01_rdbk:
+        timer: 10
+    MB1CVG01_rdbk:
+        timer: 10
+    MB1QUB02_rdbk:
+        timer: 10
+    MB1CHG02_rdbk:
+        timer: 10
+    MB1CVG02_rdbk:
+        timer: 10
+    MB1DPA01_rdbk:
+        timer: 10
+    MB1CHE01_rdbk:
+        timer: 10
+    MB1CHE02_rdbk:
+        timer: 10
+    MB1CHT01_rdbk:
+        timer: 10
+    MB1CVT01_rdbk:
+        timer: 10
+
