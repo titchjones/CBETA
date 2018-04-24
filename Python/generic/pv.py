@@ -59,8 +59,12 @@ class PVObject(QObject):
         return self._value[1] if self._value[1] is not None else 0
 
     def put(self, value):
+        ntries = 0
         if self.writeAccess:
             self.pv.put(value)
+            while abs((self.get()/self.value)-1) > 0.005 and ntries < 10:
+                time.sleep(0.01)
+
 
 class PVBuffer(PVObject):
     def __init__(self, pv, maxlen=1024, parent=None):
