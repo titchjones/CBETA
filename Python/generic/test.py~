@@ -39,8 +39,9 @@ class testPV(QMainWindow):
 
         for pv in PVs:
             self.groupBox.addWidget(epicsSliderWidget(PVBuffer(pv)))
-        self.chart = epicsBPM2D('IA1BPB01')
-        self.layout.addWidget(self.chart)
+        for f in ['IA1BPA01', 'IA1BPB01', 'IA1BPC01']:
+            chart = epicsBPM2D(f)
+            self.layout.addWidget(chart)
 
 class epicsWidget(QWidget):
     def __init__(self, pv=None, parent = None):
@@ -85,8 +86,8 @@ class epicsBPM2D(QWidget):
         self.setLayout(self.layout)
 
         self.bpmWidget = bpmWidget(pv)
-        self.bpmWidget.setScaleX(self.pvh.pv.upper_disp_limit)
-        self.bpmWidget.setScaleY(self.pvv.pv.upper_disp_limit)
+        self.bpmWidget.positionWidget.setScaleX(self.pvh.pv.upper_disp_limit)
+        self.bpmWidget.positionWidget.setScaleY(self.pvv.pv.upper_disp_limit)
         self.layout.addWidget(self.bpmWidget)
         self.updateValues()
         self.pvh.newValue.connect(self.bpmWidget.set_x)

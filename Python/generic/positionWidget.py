@@ -82,7 +82,7 @@ class positionWidget(QWidget):
         painter.setBrush(self.ref_color)
         painter.setPen(self.ref_color)
         painter.drawEllipse((ref_pos[0] * (100/self.range_x)) - self.pointWidth, (ref_pos[1] * -(100/self.range_y)) - self.pointWidth,
-        2*self.pointWidth, 2*self.pointWidth)
+        2.1*self.pointWidth, 2.1*self.pointWidth)
 
         painter.setBrush(self.color)
         painter.drawEllipse((pos[0] * (100/self.range_x)) - self.pointWidth, (pos[1] * -(100/self.range_y)) - self.pointWidth,

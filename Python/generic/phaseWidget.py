@@ -45,7 +45,7 @@ class phaseWidget(QWidget):
 
         painter.setBrush(self.color)
         painter.save()
-        painter.rotate(self.value)
+        painter.rotate(self.value - self.refValue)
         painter.drawConvexPolygon(self.hand)
         painter.restore()
 

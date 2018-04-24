@@ -225,7 +225,7 @@ class signalRecorderH5(QObject):
     def addData(self, table, row, x):
         row['time'], row['value'] = x
         row.append()
-        table.flush()
+        #table.flush()
 
     def flushTables(self):
         for t in self.tables:

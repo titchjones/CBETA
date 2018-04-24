@@ -39,8 +39,9 @@ class testPV(QMainWindow):
 
         for pv in PVs:
             self.groupBox.addWidget(epicsSliderWidget(PVBuffer(pv)))
-        self.chart = epicsBPM2D('IA1BPB01')
-        self.layout.addWidget(self.chart)
+        for f in ['IA1BPA01', 'IA1BPB01', 'IA3BPC01']:
+            chart = epicsBPM2D(f)
+            self.layout.addWidget(chart)
 
 class epicsWidget(QWidget):
     def __init__(self, pv=None, parent = None):

@@ -62,28 +62,28 @@ class responseMaker(QMainWindow):
         # self.layout.addWidget(self.newButton,0,0)
         self.layout.addWidget(self.tabs,0,0,6,6)
 
-class monitor(QObject):
+class monitor(PVBuffer):
 
     emitAverageSignal = pyqtSignal(str, list)
 
     def __init__(self, pv=None, actuator=None, parent=None):
-        super(monitor, self).__init__(parent)
+        super(monitor, self).__init__(pv, parent)
         self.name = pv
         self.actuator = actuator
-        self._value = random.random()-0.5
+        #self._value = random.random()-0.5
 
     def value(self):
-        return [self.actuator.name, [self.actuator.value(), self.mean()]]
+        return [self.actuator.name, [self.actuator.value(), self.mean]]
 
     def emitAverage(self):
         a, v = self.value()
         self.emitAverageSignal.emit(a,v)
 
-    def reset(self):
-        pass
+#    def reset(self):
+#        pass
 
-    def mean(self):
-        return 0.001*self.actuator.value()**2 * self._value
+#    def mean(self):
+#        return 0.001*self.actuator.value()**2 * self._value
 
 class corrector(QObject):
     def __init__(self, pv=None, parent=None):
@@ -154,11 +154,14 @@ class responsePlotterTab(QWidget):
         min = -0.1#self.pv.pv.lower_disp_limit
         max = 0.1#self.pv.pv.upper_disp_limit
         range = self.generateRange(min, max)
+        startValue = self.pv.value()
         for i in range:
-            self.pv.setValue(i)
+            self.pv.setValue(startValue+i)
             for m in self.monitors:
                 m.reset()
-            time.sleep(0.1)
+            length = np.min([m.length for m in self.monitors])
+            while length < 1:
+                length = np.min([m.length for m in self.monitors])
             for m in self.monitors:
                 m.emitAverage()
         self.pv.setValue(0)

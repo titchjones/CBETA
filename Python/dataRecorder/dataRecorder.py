@@ -75,11 +75,12 @@ class signalRecorder(QMainWindow):
 
     def initialiseRecorder(self, settings):
         self.folder, self.day = currentWorkFolder(createdirectory=True)
-        self.sp = striptoolRecord.signalRecorderH5(self.folder+"Signal_Archive")
+        self.sp = striptoolRecord.signalRecorderH5(self.folder+"/"+settings)
         with open(settings, 'r') as stream:
             settings = yaml.load(stream)
         for types in settings:
             for name, pvs in settings[types].items():
+                print('pvs = ', pvs)
                 if 'timer' in pvs:
                     timer = pvs['timer']
                 else:
