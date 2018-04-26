@@ -35,44 +35,21 @@ monitors = responseSettings['monitors']
 class modelIndependentAnalysis(QObject):
     def __init__(self, parent = None):
         super(modelIndependentAnalysis, self).__init__(parent)
-
-        stdicon = self.style().standardIcon
-        style = QStyle
-        self.setWindowTitle("Model Independent Analysis Application")
-
-        menubar = self.menuBar()
-        fileMenu = menubar.addMenu('&File')
-
-        exitAction = QAction('&Exit', self)
-        exitAction.setShortcut('Ctrl+Q')
-        exitAction.setStatusTip('Exit application')
-        exitAction.triggered.connect(qApp.quit)
-        fileMenu.addAction(exitAction)
-
-        startUpdating = QAction('&Save Data', self)
-        startUpdating.setShortcut('Ctrl+S')
-        startUpdating.setStatusTip('Save all data')
-        startUpdating.triggered.connect(self.saveData)
-        fileMenu.addAction(startUpdating)
-
-        self.layout = QGridLayout()
-        self.widget = QWidget()
-        self.widget.setLayout(self.layout)
-        self.setCentralWidget(self.widget)
-
+        print ('Starting up...')
         self.plots = {}
-        self.tabs = QTabWidget()
         self.monitor = multiMonitor(monitors)
-        self.svdmonitor = reconstructData()
-        self.monitor.record.signal.timer.dataReady.connect(self.svdmonitor.newBPMReading)
         for i,m in enumerate(monitors):
+            print ('Adding PV ', m)
             plot = responsePlotterTab(m,i)
-            self.tabs.addTab(plot, m)
             self.plots[m] = plot
             self.monitor.record.signal.timer.dataReady.connect(plot.plot.newBPMReading)
-        self.layout.addWidget(self.tabs,0,0,6,6)
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.saveData)
+        self.timer.start(60*1000)
+        print ('Starting save timer')
 
     def saveData(self):
+        print ('Saving data...')
         prefix = str(datetime.datetime.now().date()) + '_' + str(datetime.datetime.now().time()).replace(':', '.')
         self.h5file = tables.open_file(prefix+'_MIA_data.h5', mode = "w")
         self.rootnode = self.h5file.get_node('/')
@@ -132,111 +109,28 @@ class responsePlotterTab(QObject):
     def __init__(self, monitorName=None, pos=0, parent=None):
         super(responsePlotterTab, self).__init__(parent)
         self.pos = pos
-        self.layout = QVBoxLayout()
-        self.setLayout(self.layout)
-
-        self.buttonLayout = QHBoxLayout()
-        self.updateButton = QPushButton('Update Plot')
-        self.updateButton.setMaximumWidth(100)
-        self.buttonLayout.addWidget(self.updateButton)
-        self.layout.addLayout(self.buttonLayout)
-
         self.plot = plot(self.pos)
-        self.updateButton.clicked.connect(self.plot.updateBPMPlot)
-        self.layout.addWidget(self.plot)
 
-class HAxisTime(pg.AxisItem):
-    def __init__(self, orientation=None, pen=None, linkView=None, parent=None, maxTickLength=-5, showValues=True):
-        super(HAxisTime, self).__init__(parent=parent, orientation=orientation, linkView=linkView)
-        self.dateTicksOn = True
-        self.autoscroll = True
 
-    def updateTimeOffset(self,time):
-        self.timeOffset = time
-        self.resizeEvent()
-        self.update()
-
-    def tickStrings(self, values, scale, spacing):
-        if not hasattr(self, 'fixedtimepoint'):
-            self.fixedtimepoint = round(time.time(),2)
-        if self.dateTicksOn:
-            if self.autoscroll:
-                reftime = round(time.time(),2)
-            else:
-                reftime = self.fixedtimepoint
-            try:
-                ticks = [time.strftime("%H:%M:%S", time.localtime(x)) for x in values]
-            except:
-                ticks = []
-            return ticks
-        else:
-            places = max(0, np.ceil(-np.log10(spacing*scale)))
-            strings = []
-            for v in values:
-                vs = v * scale
-                if abs(vs) < .001 or abs(vs) >= 10000:
-                    vstr = "%g" % vs
-                else:
-                    vstr = ("%%0.%df" % places) % vs
-                strings.append(vstr)
-            return strings
-
-class plot(pg.PlotWidget):
+class plot(QObject):
     def __init__(self, pos=0, parent=None):
-        super(plot, self).__init__(parent, axisItems={'bottom': HAxisTime(orientation = 'bottom')})
+        super(plot, self).__init__(parent)
         self.pos = pos
-        self.plotItem = self.getPlotItem()
-        self.plotItem.showGrid(x=True, y=True)
-        self.data = np.empty((0,2),int)
-        self.bpmPlot = self.plotItem.plot(pen='b')
-        self.reconstructedPlot = self.plotItem.plot(pen='r')
         self.color = 0
         self.eigenMode = 0
+        self.data = np.empty((0,2),int)
 
     def reset(self):
         self.data = np.empty((0,2),int)
-        self.bpmPlot.clear()
-        self.fittedPlot.clear()
 
     def newBPMReading(self, data):
         if isinstance(data[1][self.pos],(int, float)):
             self.data = np.append(self.data, [[data[0], data[1][self.pos]]], axis=0)
 
-    def updateBPMPlot(self):
-        if self.isVisible():
-            try:
-                if len(self.data) > 10:
-                    self.bpmPlot.setData(self.data)
-            except:
-                pass
-        # self.updateReconstructedPlot()
-
-    # def updateReconstructedPlot(self):
-        # self.reconstructedPlot.setData(np.array(self.reconstructData(self.eigenMode)))
-
-class reconstructData(QObject):
-    def __init__(self, parent=None):
-        super(reconstructData, self).__init__(parent)
-        self.data = np.empty((0,len(monitors)),int)
-        self.time = []
-
-    def newBPMReading(self, data):
-        self.data = self.data + [data[1]]
-        self.time = self.time + [data[0]]
-        # self.reconstructData()
-
-    def reconstructData(self, e=0):
-        u, s, vh = np.linalg.svd(self.data, full_matrices=False)
-        news = np.zeros((len(s),))
-        news[e] = s[e]
-        print (s, news)
-        return np.dot(u * news, vh)
-
 def main():
     global app
     app = QCoreApplication(sys.argv)
     ex = modelIndependentAnalysis()
-    ex.show()
     sys.exit(app.exec_())
 
 if __name__ == '__main__':
