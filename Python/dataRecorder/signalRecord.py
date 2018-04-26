@@ -117,7 +117,7 @@ class recordWorker(QtCore.QObject):
             self.nsamplesSignal.emit(self.length)
         else:
             pass
-            print('Not a number! = ', self.name, val)
+            # print('Not a number! = ', self.name, val)
 
     def emitStatistics(self):
         length = self.length
@@ -257,4 +257,3 @@ class signalRecorderH5(QObject):
         stop = table.nrows + stop + 1 if stop < 0 else stop
         data = [[row['time'], row['value']] for row in table.itersorted('time', start=start, stop=stop)]
         return data
-
