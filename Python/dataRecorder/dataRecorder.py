@@ -75,12 +75,12 @@ class signalRecorder(QMainWindow):
 
     def initialiseRecorder(self, settings):
         self.folder, self.day = currentWorkFolder(createdirectory=True)
-        self.sp = striptoolRecord.signalRecorderH5(self.folder+"/"+settings)
+        self.sp = striptoolRecord.signalRecorderH5(self.folder+"/"+os.path.basename(settings))
         with open(settings, 'r') as stream:
             settings = yaml.load(stream)
         for types in settings:
             for name, pvs in settings[types].items():
-                print('pvs = ', pvs)
+                print('Adding PV ', name)
                 if 'timer' in pvs:
                     timer = pvs['timer']
                 else:
@@ -255,7 +255,7 @@ class dataPlot(pg.PlotWidget):
             self.bpmPlot.setData(self.data)
             self.fittedPlot.setData(self.data)
         self.plotItem.vb.translateBy(x=time.time() - self.lastTime)
-        #self.plotItem.setXRange(start+1, stop+1, padding=0)        
+        #self.plotItem.setXRange(start+1, stop+1, padding=0)
         self.lastTime = time.time()
 
 if __name__ == '__main__':
@@ -264,5 +264,6 @@ if __name__ == '__main__':
         sr = signalRecorder(settings=sys.argv[1])
     else:
         settings = str(QFileDialog.getOpenFileName()[0])
+        print ('settings = ', settings)
         sr = signalRecorder(settings=settings)
     sys.exit(app.exec_())

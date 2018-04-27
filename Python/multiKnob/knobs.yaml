@@ -1,0 +1,18 @@
+FAT_Y:
+    actuators: [
+    MS1CRV03_cmd,
+    MS1CRV04_cmd
+    ]
+    strengths: [
+    1,
+    -0.6641
+    ]
+FAT_X:
+    actuators: [
+    MS1DIP07_cmd,
+    MS1DPB08_cmd,
+    ]
+    strengths: [
+    0.435833,
+    -1
+    ]

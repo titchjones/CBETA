@@ -20,8 +20,9 @@ import sys, os, random
 from PyQt5.QtCore import *
 from  PyQt5.QtGui import *
 from  PyQt5.QtWidgets import *
-# import pyqtgraph as pg
+import pyqtgraph as pg
 import numpy as np
+from pv import *
 
 class mainWindow(QMainWindow):
   def __init__(self, parent = None):
@@ -46,55 +47,50 @@ class mainWindow(QMainWindow):
         self.tabWidget = QTabWidget()
         ''' This defines the main widget inside the main window'''
         self.setCentralWidget(self.tabWidget)
-
-        self.tabWidget.addTab(plotWidget(),"Plotting")
+        bpms = ['IS1BPM01', 'IS1BPM02','IS1BPM03','IS1BPM04']
+        for b in bpms:
+            self.tabWidget.addTab(bpmFFTPlot(b+'-positionArrayHorizM'),b)
 
 ''' This is a QWidget that contains some plots'''
-class plotWidget(QWidget):
-    def __init__(self, parent=None):
-        super(plotWidget, self).__init__(parent)
+class bpmFFTPlot(QWidget):
+    def __init__(self, bpmName, parent=None):
+        super(bpmFFTPlot, self).__init__(parent)
         '''We can add widgets inside this widget using a layout'''
         self.layout = QVBoxLayout()
         '''This sets the layout into the widget'''
         self.setLayout(self.layout)
 
+        self.lengthWidget = QSpinBox()
+        self.lengthWidget.setMinimum(1)
+        self.lengthWidget.setMaximum(600)
+        self.lengthWidget.setValue(300)
+        self.lengthWidget.setMaximumWidth(300)
+
+        self.buttonLayout = QHBoxLayout()
+        self.buttonLayout.addWidget(self.lengthWidget)
+        self.layout.addLayout(self.buttonLayout)
+
         '''lets add some plots'''
         self.plots = {}
         self.randomData = {}
         ''' we store references to the plots, so we can reference them later... '''
-        for i in range(3):
-            self.plots[i] = plot(i)
-            self.randomData[i] = createRandomData()
+        for i in range(2):
+            if i == 1:
+                self.plots[i] = plot(i, fft=True)
+            else:
+                self.plots[i] = plot(i, fft=False)
             ''' Here we add each plot to the LAYOUT of the main WIDGET '''
+            self.lengthWidget.valueChanged.connect(self.plots[i].setLength)
             self.layout.addWidget(self.plots[i])
-            ''' This connects the random data SIGNAL "dataReady" to the function of the plot called "newReading" '''
-            self.randomData[i].dataReady.connect(self.plots[i].newReading)
-
-''' This is an object to create some random data'''
-class createRandomData(QObject):
-
-    ''' this is a SIGNAL, which EMITS data to whoever is listening'''
-    dataReady = pyqtSignal(int, float)
-
-    def __init__(self, parent=None):
-        super(createRandomData, self).__init__(parent)
-        self.no = 0
-        ''' this creates a simple timer in Qt'''
-        self.timer = QTimer()
-        ''' every time the timer has finished it EMITS a "timeout" signal, and here we connect to that to fire our SIGNAL'''
-        self.timer.timeout.connect(self.emitData)
-        ''' this sets the time delay in the timer in milliseconds'''
-        self.timer.start(1000)
-
-    def emitData(self):
-        ''' the function is called every time the TIMER fires, and we use it to EMIT our signal'''
-        self.dataReady.emit(self.no, random.random())
-        self.no += 1
+            self.pv = PVWaveform(bpmName)
+            self.pv.newValue.connect(self.plots[i].newReading)
 
 ''' This is a plotting widget from pyqtgraph '''
 class plot(pg.PlotWidget):
-    def __init__(self, no=0, parent=None):
+    def __init__(self, no=0, fft=False, parent=None):
         super(plot, self).__init__(parent)
+        self.FFTEnabled = fft
+        self.length = 300
         ''' this add a plot to the plotWidget'''
         self.plotItem = self.getPlotItem()
         self.plotItem.showGrid(x=True, y=True)
@@ -105,17 +101,42 @@ class plot(pg.PlotWidget):
         ''' Note we don't have to give it data, we can just define the pen color for later '''
         self.curve = self.plotItem.plot(pen=self.color)
 
+    def setLength(self, length):
+        self.length = length
 
     def reset(self):
         self.data = np.empty((0,2),int)
         self.bpmPlot.clear()
 
     def newReading(self, x, y):
-        ''' this is called with the output of the random functions SIGNAL "dataReady", whihch emits an int and a float '''
-        ''' this is one (not very good way) of adding some data to the self.data list '''
-        self.data = np.append(self.data, [[x,y]], axis=0)
-        ''' this sets the data to the plot, and updates the plot '''
-        self.curve.setData(self.data)
+        y = y[: self.length]
+        x = np.array(range(len(y)))
+        if self.FFTEnabled and self.isVisible():
+            x, y = self._fourierTransform(x, y)
+            y = y/max(y)
+        if self.isVisible():
+            print ('new data!')
+            self.curve.setData({'x': x, 'y': y})
+
+    def _fourierTransform(self, x, y):
+        ## Perform fourier transform. If x values are not sampled uniformly,
+        ## then use np.interp to resample before taking fft.
+        # print 'length x = ', len(x)
+        dx = np.diff(x)
+        uniform = not np.any(np.abs(dx-dx[0]) > (abs(dx[0]) / 100.))
+        starttime = time.clock()
+        if not uniform:
+            # print('FFT not uniform!  ', max(np.abs(dx-dx[0])), ' > ', (abs(dx[0]) / 1000.))
+            # x2 = np.linspace(x[0], x[0] + len(x)*self.timer, len(x))
+            x2 = np.linspace(x[0], x[-1], len(x))
+            y = np.interp(x2, x, y)
+            x = x2
+        f = np.fft.fft(y) / len(y)
+        y = abs(f[1:int(len(f)/2)])
+        dt = x[-1] - x[0]
+        x = np.linspace(0, 0.5*len(x)/dt, len(y))
+        # print 'FFT took ', time.clock() - starttime
+        return x, y
 
 def main():
     ''' this is REQUIRED for Qt applications '''

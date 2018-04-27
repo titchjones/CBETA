@@ -153,7 +153,7 @@ class relative_knob(QWidget):
         #self.statusButton.setReadOnly(True)
 
         self.nameWidget = QComboBox()
-        self.nameWidget.setMinimumWidth(120)
+        self.nameWidget.setMinimumWidth(200)
         self.nameWidget.addItems(pv_names)
         if actuator is not None:
             start_index = pv_names.index(actuator)
@@ -167,9 +167,11 @@ class relative_knob(QWidget):
         self.spinWidget.setValue(1)
         self.spinWidget.setSingleStep(0.1)
         self.spinWidget.setValue(float(strength))
+        self.spinWidget.setMaximumWidth(250)
 
         self.valueWidget = QLineEdit()
         self.valueWidget.setReadOnly(True)
+        self.spinWidget.setMaximumWidth(200)
 
         self.deleteButton = QPushButton()
         self.deleteButton.setIcon(self.style().standardIcon(getattr(QStyle, 'SP_BrowserStop')))
@@ -297,7 +299,7 @@ class multiknob(QMainWindow):
 
     def saveSettings(self):
         filename, ok = QFileDialog.getSaveFileName(self, 'Save File')
-        if ok:        
+        if ok:
             settings = self.getSettings()
             with open(str(filename), 'w') as outfile:
                 yaml.dump(settings, outfile, default_flow_style=False, explicit_start=False)
@@ -332,8 +334,8 @@ class clickableTabBar(QTabBar):
             if ok:
                 self.setTabText(self.currentIndex(), newLabel)
 
-    def mouseReleaseEvent(self, event):               
-        if event.button() == Qt.MidButton:           
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.MidButton:
             self.tabCloseRequested.emit(self.tabAt(event.pos()))
         super(QTabBar, self).mouseReleaseEvent(event)
 
@@ -343,16 +345,20 @@ class knobTab(QWidget):
         super(knobTab, self).__init__(parent)
         self.layout = QGridLayout()
         self.setLayout(self.layout)
+        self.splitter = QSplitter()
+        self.splitter.setOrientation(Qt.Horizontal)
         self.multiKnobGroup = multiKnob_GroupBox()
         self.combinedKnobGroup = combinedKnob_GroupBox()
-        self.layout.addWidget(self.multiKnobGroup,0,0,1,2)
-        self.layout.addWidget(self.combinedKnobGroup,0,2)
+        self.combinedKnobGroup.setMaximumWidth(250)
+        self.splitter.addWidget(self.multiKnobGroup)
+        self.splitter.addWidget(self.combinedKnobGroup)
+        self.layout.addWidget(self.splitter,0,0,4,4)
         self.pushButton = QPushButton('Set Base Values')
         self.pushButton.clicked.connect(self.combinedKnobGroup.setZero)
-        self.layout.addWidget(self.pushButton,1,0,1,1)
+        self.layout.addWidget(self.pushButton,4,0,1,1)
         self.resetButton = QPushButton('Reset')
         self.resetButton.clicked.connect(self.combinedKnobGroup.reset)
-        self.layout.addWidget(self.resetButton,1,1,1,1)
+        self.layout.addWidget(self.resetButton,4,1,1,1)
         self.knobs = []
 
         if 'actuators' in kwargs:
@@ -393,7 +399,7 @@ def main():
     app = QApplication(sys.argv)
 
     parser = argparse.ArgumentParser(description='Multiknob Control')
-    parser.add_argument('-f', '--file', dest='inputfile')    
+    parser.add_argument('-f', '--file', dest='inputfile')
     args = parser.parse_args()
     ex = multiknob(args.inputfile)
     ex.show()

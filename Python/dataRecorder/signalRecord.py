@@ -189,7 +189,7 @@ class recordData(tables.IsDescription):
 
 class signalRecorderH5(QObject):
 
-    def __init__(self, filename="test", flushtime=1):
+    def __init__(self, filename="test", flushtime=10):
         super(signalRecorderH5, self).__init__()
         self.records = {}
         _, file_extension = os.path.splitext(filename)
@@ -202,7 +202,7 @@ class signalRecorderH5(QObject):
         else:
             self.group = self.h5file.get_node('/data')
             # print self.group
-        self.tables = []
+        self.tables = {}
         self.rows = []
         self.timer = QTimer()
         self.timer.timeout.connect(self.flushTables)
@@ -212,10 +212,11 @@ class signalRecorderH5(QObject):
         sigrec = signalRecord(records=self.records, name=name, pen=pen, timer=timer, maxlength=maxlength, function=function, **kwargs)
         if not name in self.group:
             table = self.h5file.create_table(self.group, name, recordData, name)
-            self.tables.append(table)
+            self.tables[name] = table
             table.cols.time.create_csindex()
         else:
             table = self.h5file.get_node('/data/'+name)
+            self.tables[name] = table
             sigrec.worker.nsamples = table.nrows
         row = table.row
         self.rows.append(row)
@@ -229,7 +230,7 @@ class signalRecorderH5(QObject):
 
     def flushTables(self):
         for t in self.tables:
-            t.flush()
+            self.tables[t].flush()
 
     def close(self):
         for n,r in self.records.iteritems():

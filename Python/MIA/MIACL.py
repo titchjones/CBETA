@@ -14,7 +14,17 @@ pg.setConfigOption('foreground', 'k')
 from collections import OrderedDict
 import yaml
 import tables as tables
+import signal
+import sys
 
+def signal_handler(signal, frame):
+    global ex
+    ex.saveData()
+    print('You pressed Ctrl+C!')
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
+print('Press Ctrl+C')
 
 _mapping_tag = yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG
 
@@ -43,10 +53,10 @@ class modelIndependentAnalysis(QObject):
             plot = responsePlotterTab(m,i)
             self.plots[m] = plot
             self.monitor.record.signal.timer.dataReady.connect(plot.plot.newBPMReading)
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.saveData)
-        self.timer.start(60*1000)
-        print ('Starting save timer')
+        # self.timer = QTimer()
+        # self.timer.timeout.connect(self.saveData)
+        # self.timer.start(60*1000)
+        # print ('Starting save timer')
 
     def saveData(self):
         print ('Saving data...')
@@ -128,7 +138,7 @@ class plot(QObject):
             self.data = np.append(self.data, [[data[0], data[1][self.pos]]], axis=0)
 
 def main():
-    global app
+    global app, ex
     app = QCoreApplication(sys.argv)
     ex = modelIndependentAnalysis()
     sys.exit(app.exec_())

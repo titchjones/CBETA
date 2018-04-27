@@ -1,4 +1,4 @@
-import sys, os
+import sys, os, copy
 from PyQt5.QtCore import *
 from  PyQt5.QtGui import *
 from  PyQt5.QtWidgets import *
@@ -31,6 +31,12 @@ with open(os.path.dirname( os.path.abspath(__file__))+'/MIASettings.yaml', 'r') 
     responseSettings = yaml.load(infile)
 
 monitors = responseSettings['monitors']
+
+
+class recordRMData(tables.IsDescription):
+    actuator  = tables.Float64Col()     # double (double-precision)
+    monitor  = tables.Float64Col()
+
 
 class modelIndependentAnalysis(QMainWindow):
     def __init__(self, parent = None):
@@ -78,14 +84,15 @@ class modelIndependentAnalysis(QMainWindow):
         self.rootnode = self.h5file.get_node('/')
         group = self.h5file.create_group('/', 'MIA' ,'MIA Data')
         for m in self.plots:
-            table = self.h5file.create_table(group, m, recordRMData, m+' Data')
+            table = self.h5file.create_table(group, m, recordRMData, m+'_Data')
             row = table.row
-            data = self.plots[m].plot.data
+            data = copy.deepcopy(self.plots[m].plot.data)
             self.saveRow(row, data)
             table.flush()
         self.h5file.close()
 
     def saveRow(self, row, data):
+        print ('length data = ', len(data))
         for a, m in data:
             row['actuator'], row['monitor'] = a, m
             row.append()
@@ -123,10 +130,6 @@ class multiMonitor(QObject):
 
     def get(self):
         return [self.pvs[m].get()[1] for m in self.pvs]
-
-class recordRMData(tables.IsDescription):
-    actuator  = tables.Float64Col()     # double (double-precision)
-    monitor  = tables.Float64Col()
 
 class responsePlotterTab(QWidget):
     def __init__(self, monitorName=None, pos=0, parent=None):

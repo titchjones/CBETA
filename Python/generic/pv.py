@@ -41,7 +41,7 @@ class PVObject(QObject):
     @property
     def value(self):
         if self._value[1] is None:
-            return self.pv.get()[1] if self.pv.get() is not None else 0
+            return self.pv.get() if self.pv.get() is not None else 0
         else:
             return self._value[1]
     @value.setter
@@ -72,6 +72,25 @@ class PVObject(QObject):
                     rbkValue = self.readBackPV.get()
                     ntries += 1
 
+class PVWaveform(PVObject):
+
+    newValue = pyqtSignal(float, list)
+    length = 100
+
+    def __init__(self, pv, readback=None, length=None, parent=None):
+        super(PVWaveform, self).__init__(pv, readback, parent)
+        self.length = length
+
+    def callback(self, **kwargs):
+        self.dict = OrderedDict(kwargs)
+        if 'status' in kwargs and 'value' in kwargs and self.dict['status'] is 0:
+            if not 'timestamp' in kwargs:
+                timestamp = time.time()
+            if self.length is None:
+                self._value = [self.dict['timestamp'], list(self.dict['value'])]
+            else:
+                self._value = [self.dict['timestamp'], list(self.dict['value'][:self.length])]
+            self.newValue.emit(*self._value)
 
 class PVBuffer(PVObject):
     def __init__(self, pv, maxlen=1024, parent=None):

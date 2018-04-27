@@ -17,11 +17,23 @@ for numpy and pyqtgraph, you should be able to do:
 """
 
 import sys, os, random
-from PyQt5.QtCore import *
-from  PyQt5.QtGui import *
-from  PyQt5.QtWidgets import *
+try:
+    from PyQt5.QtCore import *
+    from  PyQt5.QtGui import *
+    from  PyQt5.QtWidgets import *
+except:
+    from PyQt4.QtCore import *
+    from PyQt4.QtGui import *
 # import pyqtgraph as pg
 import numpy as np
+
+# from matplotlib.backends.qt_compat import QtCore, QtWidgets, is_pyqt5
+# from matplotlib.backends.backend_qt5agg import (
+#         FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
+
+from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
+
 
 class mainWindow(QMainWindow):
   def __init__(self, parent = None):
@@ -84,7 +96,7 @@ class createRandomData(QObject):
         ''' every time the timer has finished it EMITS a "timeout" signal, and here we connect to that to fire our SIGNAL'''
         self.timer.timeout.connect(self.emitData)
         ''' this sets the time delay in the timer in milliseconds'''
-        self.timer.start(1000)
+        self.timer.start(100)
 
     def emitData(self):
         ''' the function is called every time the TIMER fires, and we use it to EMIT our signal'''
@@ -92,18 +104,22 @@ class createRandomData(QObject):
         self.no += 1
 
 ''' This is a plotting widget from pyqtgraph '''
-class plot(pg.PlotWidget):
+class plot(QWidget):
     def __init__(self, no=0, parent=None):
         super(plot, self).__init__(parent)
         ''' this add a plot to the plotWidget'''
-        self.plotItem = self.getPlotItem()
-        self.plotItem.showGrid(x=True, y=True)
+        self.figure = Figure()
+        self.canvas = FigureCanvas(self.figure)
+        self.layout = QVBoxLayout()
+        self.layout.addWidget(self.canvas)
+        self.setLayout(self.layout)
+        self._dynamic_ax = self.figure.add_subplot(111)
         self.data = np.empty((0,2),int)
         ''' This make a color, indexed by integer no'''
-        self.color = pg.mkColor(no)
+        # self.color = pg.mkColor(no)
         ''' this adds a plotItem to the plot - this is basically a independent plot line - we could have many of these '''
         ''' Note we don't have to give it data, we can just define the pen color for later '''
-        self.curve = self.plotItem.plot(pen=self.color)
+        # self.curve = self.plotItem.plot(pen=self.color)
 
 
     def reset(self):
@@ -114,8 +130,12 @@ class plot(pg.PlotWidget):
         ''' this is called with the output of the random functions SIGNAL "dataReady", whihch emits an int and a float '''
         ''' this is one (not very good way) of adding some data to the self.data list '''
         self.data = np.append(self.data, [[x,y]], axis=0)
+        _x, _y = zip(*self.data)
         ''' this sets the data to the plot, and updates the plot '''
-        self.curve.setData(self.data)
+        self._dynamic_ax.clear()
+        # Shift the sinusoid as a function of time.
+        self._dynamic_ax.plot(_x, _y)
+        self._dynamic_ax.figure.canvas.draw()
 
 def main():
     ''' this is REQUIRED for Qt applications '''

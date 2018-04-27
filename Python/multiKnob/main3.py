@@ -157,7 +157,7 @@ class relative_knob(QWidget):
         #self.statusButton.setReadOnly(True)
 
         self.nameWidget = QComboBox()
-        self.nameWidget.setMinimumWidth(120)
+        self.nameWidget.setMinimumWidth(200)
         self.nameWidget.addItems(pv_names)
         if actuator is not None:
             start_index = pv_names.index(actuator)
@@ -166,8 +166,8 @@ class relative_knob(QWidget):
         self.nameWidget.setCurrentIndex(start_index)
 
         self.spinWidget = QDoubleSpinBox()
-        self.spinWidget.setDecimals(3)
-        self.spinWidget.setMinimum(0)
+        self.spinWidget.setDecimals(4)
+        self.spinWidget.setMinimum(-10)
         self.spinWidget.setMaximum(10)
         self.spinWidget.setValue(0.01)
         self.spinWidget.setSingleStep(0.001)
@@ -296,8 +296,8 @@ class multiknob(QMainWindow):
 
     def closeTab(self, tab):
         layout = self.widget.widget(tab).layout
-        for i in reversed(range(layout.count())): 
-            layout.itemAt(i).widget().setParent(None)        
+        for i in reversed(range(layout.count())):
+            layout.itemAt(i).widget().setParent(None)
         self.widget.widget(tab).deleteLater()
         self.widget.removeTab(tab)
 
@@ -317,7 +317,7 @@ class multiknob(QMainWindow):
 
     def saveSettings(self):
         filename, ok = QFileDialog.getSaveFileName(self, 'Save File')
-        if ok:        
+        if ok:
             settings = self.getSettings()
             with open(str(filename), 'w') as outfile:
                 yaml.dump(settings, outfile, default_flow_style=False, explicit_start=False)
@@ -352,8 +352,8 @@ class clickableTabBar(QTabBar):
             if ok:
                 self.setTabText(self.currentIndex(), newLabel)
 
-    def mouseReleaseEvent(self, event):               
-        if event.button() == Qt.MidButton:           
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.MidButton:
             self.tabCloseRequested.emit(self.tabAt(event.pos()))
         super(QTabBar, self).mouseReleaseEvent(event)
 
@@ -419,7 +419,7 @@ def main():
     app = QApplication(sys.argv)
 
     parser = argparse.ArgumentParser(description='Multiknob Control')
-    parser.add_argument('-f', '--file', dest='inputfile')    
+    parser.add_argument('-f', '--file', dest='inputfile')
     args = parser.parse_args()
     ex = multiknob(args.inputfile)
     ex.show()
